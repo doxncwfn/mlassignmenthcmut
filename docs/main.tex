@@ -30,6 +30,41 @@
 \definecolor{commentcolor}{rgb}{0.25,0.5,0.35} % Green comments
 \definecolor{backgroundcolor}{rgb}{0.97,0.97,0.97} % Light background
 
+\lstdefinelanguage{Python}{
+  morekeywords={
+    and, as, assert, async, await, break, class, continue, def, del, elif, else, except,
+    False, finally, for, from, global, if, import, in, is, lambda, None, nonlocal, not, 
+    or, pass, raise, return, True, try, while, with, yield
+  },
+  keywordstyle=\color{keywordcolor}\bfseries,
+  morekeywords=[2]{bool, bytes, bytearray, complex, dict, float, frozenset, int, list, object, set, str, tuple},
+  keywordstyle=[2]\color{blue}\bfseries,
+  identifierstyle=\color{black},
+  sensitive=true,
+  comment=[l]{\#},
+  morecomment=[s]{'''}{'''}, 
+  morecomment=[s]{"""}{"""},
+  commentstyle=\color{commentcolor}\ttfamily,
+  stringstyle=\color{stringcolor}\ttfamily,
+  morestring=[b]',
+  morestring=[b]",
+}
+\lstset{
+  language=Python,
+  backgroundcolor=\color{backgroundcolor},
+  basicstyle=\ttfamily\small,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  stepnumber=1,
+  numbersep=10pt,
+  tabsize=2,
+  showspaces=false,
+  showstringspaces=false,
+  breaklines=true,
+  breakatwhitespace=true,
+  frame=single,
+}
+
 \lstdefinelanguage{TypeScript}{
   keywords={abstract, as, boolean, break, case, catch, class, continue, const, constructor, debugger, declare, default, delete, do, else, enum, export, extends, false, finally, for, from, function, get, if, implements, import, in, infer, instanceof, interface, is, keyof, let, module, namespace, never, new, null, number, object, of, package, private, protected, public, readonly, require, global, return, set, static, string, super, switch, symbol, this, throw, true, try, type, typeof, undefined, unique, unknown, var, void, while, with, yield, async, await},
   keywordstyle=\color{keywordcolor}\bfseries,
@@ -125,25 +160,200 @@
     #1
   \end{lstlisting}
 }
+\newcommand{\python}[1]
+{
+  \begin{lstlisting}[language=python]
+    #1
+  \end{lstlisting}
+}
 \AtBeginDocument{\counterwithin{lstlisting}{section}}
 
 \begin{document}
 \fancyfoot{}
 \coverpage\clearpage
 
-% \tableofcontents
-% \listoffigures
-% \clearpage
+\tableofcontents
+\listoffigures
+\clearpage
+
 \setcounter{page}{1}
 \fancyfoot[L]{\scriptsize \ttfamily Machine Learning\\1$^{\texttt{st}}$ Semester -- Academic year 2025-2026}
 \fancyfoot[R]{\scriptsize \ttfamily Page {\thepage}/\pageref{LastPage}}
 
-\section{Objective}
+\section{Objectives}
 
-\section{Dataset}
-\subsection{Data Mining}
-\section{Preprocessing}
-\subsection{}
-\section{}
+\subsection*{Aim of the Project}
+
+The primary aim of this project is to develop and evaluate a machine learning model for predicting student academic outcomes — specifically, whether a student will graduate, remain enrolled, or drop out — using the \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{Predict Students' Dropout and Academic Success}} dataset from the UCI Machine Learning Repository.\\
+
+This assignment, part of an introductory Machine Learning course, focuses on applying supervised classification techniques to real-world educational data, emphasizing ethical considerations such as avoiding target leakage and handling class imbalance. By building predictive models, the project seeks to demonstrate how data-driven insights can support early interventions in higher education to improve retention rates and student success.
+
+\subsection*{Specific Objectives}
+
+\begin{enumerate}
+  \item \textbf{Data Exploration and Preprocessing:} Analyze the dataset's features (demographic, socioeconomic, macroeconomic, academic) to understand distributions, correlations, and potential biases. Perform preprocessing, including feature engineering while ensuring no inclusion of leaky features from post-enrollment periods.
+
+  \item \textbf{Feature Selection and Leakage Mitigation:} Identify and exclude features that introduce target leakage (e.g., second-semester academic metrics), focusing on enrollment-time and first-semester data for fair, prospective predictions.
+
+  \item \textbf{Model Development:} Implement baseline and tuned classification models using Random Forest and Gradient Boosting algorithms, incorporating techniques like stratified splitting, robust scaling, one-hot encoding, and class weighting to address multiclass imbalance.
+
+  \item \textbf{Hyperparameter Tuning and Evaluation:} Use randomized search with cross-validation to optimize model hyperparameters, evaluating performance through metrics such as accuracy, macro F1-score, precision, recall, and ROC-AUC. Assess overfitting and compare results against benchmarks to validate model robustness.
+
+  \item \textbf{Interpretation and Insights:} Analyze feature importances to uncover key predictors of student outcomes, providing actionable recommendations for educational stakeholders.
+\end{enumerate}
+
+\subsubsection*{Primary Goal}
+
+The primary goal is to predict student outcomes as a three-class classification problem: Graduate (completed the degree on time), Enrolled (still ongoing at the end of normal duration), or Dropout (left the institution). This supports early intervention strategies to reduce dropout rates. The dataset has no missing values, and preprocessing was performed to handle anomalies and outliers. It is licensed under CC BY 4.0 and sourced from Realinho et al. (2021). Through these objectives, the project not only applies core machine learning concepts such as pipelines, tuning, and evaluation, but also highlights the importance of ethical modeling in sensitive domains like education, where biased or leaky predictions could mislead interventions.
+
+\section{Dataset Overview and Visualization}
+\subsection{Data Loading and Initial Inspection}
+
+The dataset was loaded from a CSV file (\texttt{data.csv}) into a Pandas DataFrame for analysis. Initial inspection revealed the following key details:
+
+\begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt]
+  \item \textbf{Shape:} The dataset consists of \textbf{4424} rows (instances) and \textbf{37} columns (36 features + 1 target variable). For more details about each features please access \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{UCI Machine Learning Repository}}.
+  \item \textbf{Target Variable:} \texttt{Target} is the multiclass label with three categories:\\
+        \begin{minipage}{0.48\textwidth}
+          \begin{itemize}
+            \item \textbf{Graduate}: 2209 instances ($\sim$50\%)
+            \item \textbf{Dropout}: 1421 instances ($\sim$32\%)
+            \item \textbf{Enrolled}: 794 instances ($\sim$18\%)
+          \end{itemize}
+          \textit{This indicates a moderate class imbalance, with Graduates as the majority class.}
+        \end{minipage}
+        \hfill
+        \begin{minipage}{0.48\textwidth}
+          \begin{figure}[H]
+            \centering
+            \includegraphics[width=0.85\textwidth]{../images/target_distribution.png}
+            \caption{Target Distribution}
+            \label{target-distribution}
+          \end{figure}
+        \end{minipage}
+  \item \textbf{Feature Types:}
+        \begin{itemize}
+          \item \textbf{Numerical (continuous/discrete):} 20 features (e.g., grades, ages, economic indicators)
+          \item \textbf{Categorical (nominal/ordinal/binary):} 16 features (e.g., marital status, course, gender)
+        \end{itemize}
+  \item \texttt{Missing Values:} \textit{No missing values} were detected across the dataset.
+  \item \texttt{Duplicates:} \textit{No duplicate rows} were found.
+  \item \texttt{Data Types:} Mostly integers (discrete/binary/ordinal) and floats (grades/rates); the target is categorical (string).
+\end{itemize}
+
+A summary of basic statistics for numerical features (mean, std, min, max) is provided below (computed via \texttt{df.describe()}):
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/numeric_describe.png}
+  \caption{Numerical Features statistics}
+  \label{num-describe}
+\end{figure}
+
+
+\paragraph{Data Insights and Summary Statistics}
+
+\begin{itemize}[label=--]
+  \item \textbf{Age Distribution:} Student ages range from 17 to 70 years, with a mean of approximately 23 years. This reflects a student body that is primarily comprised of traditional undergraduates, but also includes a non-negligible number of older, non-traditional students.
+  \item \textbf{Grades:} Key academic grades, including admission and semester averages, fall within a 0-20 scale. The mean values generally range from 10 to 13, indicating that most students perform at or slightly above average, with substantial variability across the cohort.
+  \item \textbf{Economic Indicators:} Features such as unemployment rate, inflation, and GDP are included to capture macroeconomic context for each student's enrollment year (2008-2019). Statistical summaries show these indicators vary only moderately across the sample, highlighting changing economic conditions that may indirectly influence student outcomes.
+  \item \textbf{Semester Metrics:}
+        \begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt, label=+]
+          \item \textit{Approvals/Evaluations:} Metrics for the first semester show higher rates of approved units and evaluations when compared to the second semester.
+          \item \textit{Dropout Effect:} This discrepancy is likely explained by student attrition—some students drop out after the first semester, leading to incomplete or reduced second-semester data.
+        \end{itemize}
+\end{itemize}
+
+These insights inform both preprocessing and model development by clarifying typical data ranges, potential sources of variance, and the importance of handling non-standard cases such as older students or those affected by economic conditions.
+
+\subsection{Data Visualization}
+
+Visualizations were generated using \texttt{Matplotlib} and \texttt{Seaborn} to explore distributions, relationships, and patterns. All figures were saved to the images directory for inclusion in the report. Key visualizations and insights are described below.
+
+\subsubsection{Numerical Feature Distributions (Histograms)}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/numeric_histograms.png}
+  \caption{Numerical Feature Distributions}
+  \label{num_dist_his}
+\end{figure}
+
+\paragraph*{Insights}
+
+The histograms with kernel density estimates (KDE) for selected numerical features highlight distributional characteristics that guide preprocessing steps such as transformation, outlier handling, and scaling to improve model performance and stability:
+\begin{itemize}
+  \item \textbf{Previous Qualification (grade):} The distribution is roughly symmetric around 130 but shows multimodality with spikes (e.g., at 125, 140), possibly due to grading scales or binning effects. Range 95--190 with std $\approx$13.2.
+  \item \textbf{Admission grade:} Multimodal with peaks around 120--140, similar variance (std $\approx$14.5) and range (95--190). Indicates clustered admission scores. Robust scaling to mitigate peak influences in distance metrics like KNN.
+  \item \textbf{Enrollment Age:} Heavily right-skewed (mean 23.3, median 20) with long tail up to 70, most mass at 18--25. Potential outliers beyond 40. Group ages to reduce parsity
+  \item \textbf{1st Semester Approved Units:} Right-skewed with mode at 5--6, many low values (25\% at 3, min 0), max 26. Zero-inflated aspect for non-approvals. Treat zeros separately (e.g., binary flag for zero approvals) to handle excess zeros in count-based models.
+  \item \textbf{2nd Semester Approved Units:} Similar to 1st semester but slightly shifted (mean 4.4, more spread in low approvals). Right-skewed with potential zeros. Aggregate with 1st semester if correlated; apply square-root transform for variance stabilization in Poisson-like distributions would be a solid option.
+  \item \textbf{2nd Semester Grade:} Bimodal with peaks at 0--5 (failures?) and 10--15 (passes), mean 10.2, std 5.2. Heavy mass at low ends, indicating grade inflation or dropout effects. Cap or bin grades into categories if granularity adds noise, especially for tree-based models tolerant to non-normality.
+\end{itemize}
+
+In summary, skewed features like age and approvals benefit from transformations (log/sqrt) to approximate normality for parametric models, while grades may require robust scaling due to multimodality. Outlier clipping and zero-handling are crucial for academic metrics to avoid bias in predictions of student success.
+
+\subsubsection{Key Categorical Distribution}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/target_by_categorical_all.png}
+  \caption{Key Categorical Distribution}
+  \label{cat_dist_dist}
+\end{figure}
+\subsection{Correlation Heatmap}
+\paragraph{Insights}
+
+\begin{itemize}
+  \item \textbf{Marital Status:} Almost all students are single (category 1), with very few in other marital states. This feature exhibits severe imbalance and limited variation, suggesting it may have minimal predictive power or could be grouped into binary categories (single vs. others) to reduce sparsity.
+  \item \textbf{Application Mode:} The large concentration in application mode 1 with several smaller categories indicates a high cardinality categorical variable with skewed representation. Rare categories might be grouped or encoded carefully to avoid noise and sparsity in the model.
+  \item \textbf{Course:} The counts are spread across many courses, with one course having a notably high count. This high dimensionality and imbalance may require dimensionality reduction, grouping of less common courses, or using embedding techniques for encoding.
+  \item \textbf{Daytime/Evening Attendance:} Shows a clear majority in daytime attendance (category 1), but both categories have sufficient representation. This categorical feature is well balanced for direct encoding.
+  \item \textbf{Special Needs:} Overwhelming majority do not have special needs, making this feature highly imbalanced. It may have limited impact unless special needs cases strongly associate with outcomes, warranting inclusion with careful encoding or as a binary flag.
+  \item \textbf{Debtor:} Shows class imbalance with most students not being debtors. This binary feature can be used as is, but attention should be paid during model evaluation to account for imbalance effects.
+  \item \textbf{Scholarship:} A similar pattern to debtor status, with most students not receiving scholarships. While there is imbalance, the feature may add useful information on socioeconomic status if encoded suitably.
+  \item \textbf{Tuition Fees Up to Date:} Nearly all students have tuition fees up to date except for a significant minority. This binary feature appears informative and well suited for direct inclusion.
+\end{itemize}
+
+In summary, categorical features with many rare categories (Application Mode, Course, Marital Status) will benefit from grouping or specialized encoding to reduce sparsity. Features with binary outcomes and moderate imbalance can be used directly with attention to balancing during model training.
+
+\subsubsection{Correlation Heatmap}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/correlation_heatmap.png}
+  \caption{Correlation Heatmap}
+  \label{core_heat}
+\end{figure}
+\paragraph{Insights}
+\begin{itemize}
+  \item \textbf{1st and 2nd Semester Academic Metrics (e.g., credited, enrolled, evaluations, approved, grade):} These show strong positive correlations within and across semesters (often $>$0.7, e.g., 1st approved vs. 2nd approved $\approx$0.90). This indicates redundancy; preprocessing should involve aggregating (e.g., total approvals) or applying PCA to reduce dimensions and avoid multicollinearity in linear models.
+  \item \textbf{Parental Qualifications and Occupations (Mother's/Father's Qualification, Occupation):} Moderate correlations (0.4--0.7) suggest socioeconomic clustering. Combine into a parental background score via averaging or factor analysis to simplify without losing information.
+  \item \textbf{Macroeconomic Indicators (Unemployment rate, Inflation rate, GDP):} Very weak correlations with all features ($<$0.1 absolute), implying low relevance. Drop these during feature selection (e.g., using correlation threshold $<$0.1) to minimize noise and model complexity.
+  \item \textbf{Enrollment Age:} Low correlations overall ($<$0.3) but potential for outliers (range 17--70). Apply winsorization or log transformation to handle skewness and extreme values that could distort distance-based algorithms.
+  \item \textbf{Admission and Previous Grades (Admission grade, Previous qualification grade):} Moderate links to semester grades (0.3--0.5), indicating some predictive value. Standardize scales as they differ from semester grades; retain but monitor for multicollinearity with academic outcomes.
+  \item \textbf{International and Nationality:} High correlation ($\approx$0.9), as one derives from the other. Remove one (e.g., Nationality if redundant) to eliminate perfect collinearity issues.
+  \item \textbf{Gender and Scholarship:} Weak correlations ($<$0.2) but binary nature makes them easy to encode. Retain with one-hot or label encoding; address any class imbalance via sampling if linked to target in further analysis.
+  \item \textbf{Displaced and Special Needs:} Low inter-correlations ($<$0.1); treat as flags. Binary encoding suffices, but check distributions for rarity and potential merging if sparse.
+\end{itemize}
+
+In summary, focus on reducing redundancy in highly correlated academic and family features through aggregation or dimensionality reduction, while dropping weakly correlated macroeconomic variables. Scaling is essential for features with varying ranges (e.g., age, grades) to ensure compatibility in machine learning pipelines.
+
+\subsection{Feature Engineering and Preprocessing}
+
+\subsubsection{Feature Engineering}
+
+\newpage\section{Conclusion}
+
+This machine learning project successfully developed predictive models for student outcome classification, achieving over 77\% accuracy in identifying students who will graduate, remain enrolled, or dropout. The comprehensive feature engineering approach, particularly the creation of approval rates and performance delta metrics, significantly contributed to model performance.
+
+The systematic workflow from data exploration through hyperparameter optimization demonstrates best practices in machine learning project development. The results provide a foundation for implementing early warning systems in educational institutions to identify at-risk students and enable timely interventions.
+
+\subsection{Future Work}
+
+\begin{itemize}
+  \item Investigation of additional ensemble methods
+  \item Implementation of deep learning approaches
+  \item Integration of temporal sequence modeling
+  \item Development of interpretability frameworks for model decisions
+\end{itemize}
 
 \end{document}

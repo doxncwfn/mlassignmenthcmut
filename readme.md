@@ -1,9 +1,10 @@
-# ML Assignment HCMUT
+## Project Overview
 
-This repository contains code, notebooks, and report files for a machine learning assignment focused on predicting student dropout and academic success.
+This repository contains a machine learning assignment for Ho Chi Minh University of Technology (HCMUT) focused on **predicting student dropout and academic success**. The project involves a complete ML pipeline from exploratory data analysis to model training and hyperparameter optimization.
 
-- **Repository:** [doxncwfn/mlassignmenthcmut](https://github.com/doxncwfn/mlassignmenthcmut)
-- **Primary Language:** Jupyter Notebook, Python, LaTeX
+**Primary Language:** Python (Jupyter Notebooks)
+**Domain:** Educational Data Mining / Student Success Prediction
+**Target Classes:** Graduate, Enrolled, Dropout
 
 ## Repository Structure
 
@@ -24,80 +25,166 @@ mlassignmenthcmut/
 │   └── images/                 # Directory for storing report-related images
 └── src/
     ├── hypertuning.ipynb       # Notebook for hyperparameter tuning and model optimization
-    ├── main.ipynb              # Main notebook for EDA, preprocessing, and overall workflow
+    ├── visualize.ipynb         # Notebook for visualization and statistical working on raw dataset
     ├── preprocess.ipynb        # Notebook for data preprocessing and feature engineering experiments
-    └── train.ipynb             # Notebook for training and evaluating ML models
+    ├── train.ipynb             # Notebook for training and evaluating ML models
+    └── main.ipynb              # Main notebook for EDA, preprocessing, and overall workflow
 ```
 
-### Key Files and Their Functions
-
-#### docs/
-
-- [`main.tex`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/docs/main.tex)  
-  The main LaTeX file for the assignment report. It contains the structure, formatting, and content for the final document submitted for the assignment.
-
-- [`hcmut-report.cls`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/docs/hcmut-report.cls)  
-  Custom LaTeX class file designed for HCMUT assignments. Provides tailored formatting, university branding, and macros for report consistency.
-
-#### src/
-
-- [`visualize.ipynb`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/src/visualize.ipynb)  
-  Jupyter Notebook for visualizing the raw student data. Provides exploratory plots and summary statistics to understand the dataset before preprocessing and modeling.
-- [`preprocess.ipynb`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/src/preprocess.ipynb)  
-  Jupyter Notebook for data preprocessing. Responsible for cleaning, transforming, and preparing the raw student data before training and analysis.
-
-- [`train.ipynb`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/src/train.ipynb)  
-  Jupyter Notebook that loads the processed student dataset, performs exploratory data analysis, feature engineering, and trains machine learning models to predict student outcomes.
-
-- [`hypertuning.ipynb`](https://github.com/doxncwfn/mlassignmenthcmut/blob/main/src/hypertuning.ipynb)  
-  Notebook for conducting hyperparameter tuning. Includes code to split data, select features, encode categorical and numerical variables, and optimize model parameters for best performance.
-
-_(Other files may be present. To see all files, browse the repo: [GitHub source tree](https://github.com/doxncwfn/mlassignmenthcmut/tree/main))_
-
-## Getting Started
-
-1. **Clone the repository:**
-   ```bash
-   git clone https://github.com/doxncwfn/mlassignmenthcmut.git
-   ```
-2. **Navigate to the folder:**
-   ```bash
-   cd mlassignmenthcmut
-   ```
-3. **Open notebooks:**
-   Use Jupyter Notebook or JupyterLab to open `.ipynb` files in `src/`.
-
-## Requirements
-
-- Python 3.8+ recommended
-- Jupyter Notebook or JupyterLab
-- ML libraries: numpy, pandas, scikit-learn, matplotlib, etc.
-- LaTeX distribution (for compiling `docs/main.tex`)
-
-Install Python dependencies:
+### Environment Setup
 
 ```bash
-# Install Dependencies
+# Install dependencies
 pip install -r requirements.txt
+
+# Start Jupyter environment
+jupyter notebook
+# or
+jupyter lab
 ```
 
-## Usage
+### Notebook Execution Order
 
-- **Development:** Use notebooks in `src/` to run experiments, train models, and tune hyperparameters.
-- **Documentation:** Edit or compile `docs/main.tex` for the final report. Use `hcmut-report.cls` for consistent formatting.
+The notebooks should be run in this sequence for proper workflow:
 
-## Contributing
+1. `src/visualize.ipynb` - Data visualization and initial exploration
+2. `src/preprocess.ipynb` - Data cleaning and feature engineering
+3. `src/train.ipynb` - Model training and evaluation
+4. `src/hypertuning.ipynb` - Hyperparameter optimization
 
-Contributions are welcome! Fork the repo and submit a pull request.
+### Data Workflow
 
-## License
+```bash
+# Raw data location
+data/data.csv
 
-No license specified. Please contact the repository owner for usage permissions.
+# Processed data with engineered features
+data/engineered_features.csv
+```
 
-## Contact
+### Report Generation
 
-For questions or support, contact [doxncwfn](https://github.com/doxncwfn).
+```bash
+# Compile LaTeX report (requires LaTeX distribution)
+cd docs/
+pdflatex main.tex
+# or
+latexmk -pdf main.tex
+```
 
----
+## Code Architecture
 
-_Last updated: 2025-10-11_
+### Data Pipeline Architecture
+
+- **Raw Data**: Student academic and demographic data with 37 features
+- **Feature Engineering**: Creates additional features like approval rates, grade deltas, and age groups
+- **Target Encoding**: Maps categorical targets (Graduate, Enrolled, Dropout) to numerical values (0, 1, 2)
+
+### ML Pipeline Structure
+
+1. **Data Preprocessing Pipeline**:
+
+   - Numerical features: Scaled using `RobustScaler`
+   - Categorical features: One-hot encoded with unknown value handling
+   - Feature selection combines both numerical and categorical transformations
+
+2. **Model Architecture**:
+
+   - Primary models: Random Forest and Gradient Boosting classifiers
+   - Cross-validation: Stratified 5-fold CV for imbalanced data handling
+   - Evaluation: Multi-class classification with macro-averaged F1 score
+
+3. **Hyperparameter Optimization**:
+   - Uses `RandomizedSearchCV` for efficient parameter space exploration
+   - Handles class imbalance through balanced sampling and custom scoring
+   - Separate parameter grids for each model type
+
+### Key Feature Engineering
+
+The preprocessing pipeline creates derived features that significantly impact model performance:
+
+- **Approval Rates**: `1st_approval_rate`, `2nd_approval_rate` (semester-wise success rates)
+- **Grade Averages**: `1st_avg_grade`, `2nd_avg_grade` (academic performance metrics)
+- **Performance Deltas**: `delta_approval_rate`, `delta_avg_grade` (performance changes between semesters)
+- **Age Grouping**: Categorical age groups for demographic analysis
+
+### Model Configuration
+
+The hyperparameter tuning uses these parameter spaces:
+
+- **Random Forest**: 300-500 trees, depth 20-30, balanced class weights
+- **Gradient Boosting**: 100-300 estimators, learning rates 0.01-0.15, depth 3-9
+
+## Data Structure
+
+### Input Features (37 columns)
+
+- **Demographic**: Marital status, nationality, age, gender
+- **Academic Background**: Previous qualifications, admission grades
+- **Parental**: Mother's/Father's qualification and occupation
+- **Financial**: Scholarship status, tuition payment status
+- **Academic Performance**: Semester-wise enrolled/approved/grade metrics
+- **Economic**: Unemployment rate, inflation rate, GDP
+
+### Engineered Features (10 additional)
+
+- Approval rate calculations for each semester
+- Average grade computations
+- Performance change metrics (deltas)
+- Age group categorization (0: 18-20, 1: 21-25, 2: 26-35, 3: 36+)
+
+### Target Variable
+
+- **Graduate** (0): Successfully completed the program
+- **Enrolled** (1): Currently active in the program
+- **Dropout** (2): Left the program without completion
+
+## Report System
+
+The project uses a custom LaTeX class (`hcmut-report.cls`) for academic report formatting:
+
+- University branding and formatting standards
+- Code highlighting for Python, SQL, JavaScript, and TypeScript
+- Professional academic document structure
+- Automated figure and table management
+
+### LaTeX Structure
+
+- Custom document class with HCMUT styling
+- Multi-language code highlighting support
+- Professional table and figure formatting
+- Automated page numbering and cross-references
+
+## Important Files
+
+- `data/data.csv`: Original dataset with student information
+- `data/engineered_features.csv`: Processed dataset with additional features
+- `src/preprocess.ipynb`: Core feature engineering logic
+- `src/hypertuning.ipynb`: Model optimization with best parameters
+- `docs/hcmut-report.cls`: University-specific LaTeX formatting
+- `requirements.txt`: Exact dependency versions for reproducibility
+
+## Development Notes
+
+### Class Imbalance Handling
+
+The dataset has imbalanced target classes, addressed through:
+
+- Stratified sampling in train/test splits
+- Balanced class weights in Random Forest
+- Macro-averaged scoring metrics
+- Custom sample weight computation
+
+### Model Performance Context
+
+Current best performance metrics from hyperparameter tuning:
+
+- Random Forest: ~77.25% accuracy with balanced_subsample weighting
+- Gradient Boosting: ~77.11% accuracy with optimized parameters
+
+### Data Quality Considerations
+
+- Some features have missing values that need handling
+- Categorical variables are encoded numerically in raw data
+- Economic indicators (GDP, inflation) provide temporal context
+- Academic performance metrics span two semesters for trend analysis
