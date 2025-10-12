@@ -21,8 +21,6 @@
 \usepackage{tikz}
 \usepackage{pgfplots}
 \usepackage{tcolorbox}
-\usepackage{listings}
-\usepackage{xcolor}
 \usepackage{lastpage}
 
 \definecolor{keywordcolor}{rgb}{0.13,0.13,1} % Blue keywords
@@ -325,14 +323,14 @@ In summary, categorical features with many rare categories (Application Mode, Co
 \end{figure}
 \paragraph{Insights}
 \begin{itemize}
-  \item \textbf{1st and 2nd Semester Academic Metrics (e.g., credited, enrolled, evaluations, approved, grade):} These show strong positive correlations within and across semesters (often $>$0.7, e.g., 1st approved vs. 2nd approved $\approx$0.90). This indicates redundancy; preprocessing should involve aggregating (e.g., total approvals) or applying PCA to reduce dimensions and avoid multicollinearity in linear models.
+  \item \textbf{1st and 2nd Semester Academic Metrics:} These show strong positive correlations within and across semesters (often $>$ 0.7, e.g., 1st approved vs. 2nd approved $\approx$ 0.90). This indicates redundancy; preprocessing should involve aggregating (e.g., total approvals) or applying PCA to reduce dimensions and avoid multicollinearity in linear models.
   \item \textbf{Parental Qualifications and Occupations (Mother's/Father's Qualification, Occupation):} Moderate correlations (0.4--0.7) suggest socioeconomic clustering. Combine into a parental background score via averaging or factor analysis to simplify without losing information.
-  \item \textbf{Macroeconomic Indicators (Unemployment rate, Inflation rate, GDP):} Very weak correlations with all features ($<$0.1 absolute), implying low relevance. Drop these during feature selection (e.g., using correlation threshold $<$0.1) to minimize noise and model complexity.
-  \item \textbf{Enrollment Age:} Low correlations overall ($<$0.3) but potential for outliers (range 17--70). Apply winsorization or log transformation to handle skewness and extreme values that could distort distance-based algorithms.
+  \item \textbf{Macroeconomic Indicators (Unemployment rate, Inflation rate, GDP):} Very weak correlations with all features ($<$ 0.1 absolute), implying low relevance. Drop these during feature selection to minimize noise and model complexity.
+  \item \textbf{Enrollment Age:} Low correlations overall ($<$ 0.3) but potential for outliers (range 17--70). Apply winsorization to handle skewness and extreme values that could distort distance-based algorithms.
   \item \textbf{Admission and Previous Grades (Admission grade, Previous qualification grade):} Moderate links to semester grades (0.3--0.5), indicating some predictive value. Standardize scales as they differ from semester grades; retain but monitor for multicollinearity with academic outcomes.
-  \item \textbf{International and Nationality:} High correlation ($\approx$0.9), as one derives from the other. Remove one (e.g., Nationality if redundant) to eliminate perfect collinearity issues.
-  \item \textbf{Gender and Scholarship:} Weak correlations ($<$0.2) but binary nature makes them easy to encode. Retain with one-hot or label encoding; address any class imbalance via sampling if linked to target in further analysis.
-  \item \textbf{Displaced and Special Needs:} Low inter-correlations ($<$0.1); treat as flags. Binary encoding suffices, but check distributions for rarity and potential merging if sparse.
+  \item \textbf{International and Nationality:} High correlation ($\approx$ 0.9), as one derives from the other. CLearly we should remove one to eliminate perfect collinearity issues.
+  \item \textbf{Gender and Scholarship:} Weak correlations ($<$ 0.2) but binary nature makes them easy to encode. Retain with one-hot or label encoding; address any class imbalance via sampling if linked to target in further analysis.
+  \item \textbf{Displaced and Special Needs:} Low inter-correlations ($<$ 0.1); treat as flags. Binary encoding suffices, but check distributions for rarity and potential merging if sparse.
 \end{itemize}
 
 In summary, focus on reducing redundancy in highly correlated academic and family features through aggregation or dimensionality reduction, while dropping weakly correlated macroeconomic variables. Scaling is essential for features with varying ranges (e.g., age, grades) to ensure compatibility in machine learning pipelines.
@@ -340,6 +338,26 @@ In summary, focus on reducing redundancy in highly correlated academic and famil
 \subsection{Feature Engineering and Preprocessing}
 
 \subsubsection{Feature Engineering}
+
+\begin{lstlisting}[language=python]
+useless_cols = ['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP']
+df_prep = df_prep.drop(columns=useless_cols)
+
+col_func_map = {
+    'Marial Status': lambda x: marial(x),
+    'Application mode': lambda x: app_mode(x),
+    'Course': lambda x: course(x),
+    'Pre Qual': lambda x: pre_qual(x),
+    'Nationality': lambda x: nationality(x),
+    "Mom's Qual": lambda x: qual(x),
+    "Dad's Qual": lambda x: qual(x),
+    "Mom's Occupation": lambda x: moms_job(x),
+    "Dad's Occupation": lambda x: dads_job(x)
+}
+
+for col, func in col_func_map.items():
+    df_prep[col] = df_prep[col].apply(func)
+\end{lstlisting}
 
 \newpage\section{Conclusion}
 

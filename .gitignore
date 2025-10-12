@@ -31,3 +31,7 @@ images/
 *.acr
 *.alg
 *.synctex.gz
+
+# Excalidraw files
+*.excalidraw
+*.excalidraw.svg
