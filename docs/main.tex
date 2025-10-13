@@ -182,7 +182,7 @@
 
 \subsection*{Aim of the Project}
 
-The primary aim of this project is to develop and evaluate a machine learning model for predicting student academic outcomes — specifically, whether a student will graduate, remain enrolled, or drop out — using the \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{Predict Students' Dropout and Academic Success}} dataset from the UCI Machine Learning Repository.\\
+The primary aim of this project is to develop and evaluate a machine learning model for predicting student academic outcomes - specifically, whether a student will graduate, remain enrolled, or drop out - using the \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{Predict Students' Dropout and Academic Success}} dataset from the UCI Machine Learning Repository.\\
 
 This assignment, part of an introductory Machine Learning course, focuses on applying supervised classification techniques to real-world educational data, emphasizing ethical considerations such as avoiding target leakage and handling class imbalance. By building predictive models, the project seeks to demonstrate how data-driven insights can support early interventions in higher education to improve retention rates and student success.
 
@@ -239,7 +239,7 @@ The dataset was loaded from a CSV file (\texttt{data.csv}) into a Pandas DataFra
   \item \texttt{Data Types:} Mostly integers (discrete/binary/ordinal) and floats (grades/rates); the target is categorical (string).
 \end{itemize}
 
-A summary of basic statistics for numerical features (mean, std, min, max) is provided below (computed via \texttt{df.describe()}):
+A summary of some basic statistics for numerical features (mean, std, min, max) is provided below (computed via \texttt{df.describe()}):
 
 \begin{figure}[H]
   \centering
@@ -294,13 +294,11 @@ In summary, skewed features like age and approvals benefit from transformations 
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{../images/target_by_categorical_all.png}
+  \includegraphics[width=\textwidth]{../images/target_by_categorical_all_count.png}
   \caption{Key Categorical Distribution}
   \label{cat_dist_dist}
 \end{figure}
-\subsection{Correlation Heatmap}
 \paragraph{Insights}
-
 \begin{itemize}
   \item \textbf{Marital Status:} Almost all students are single (category 1), with very few in other marital states. This feature exhibits severe imbalance and limited variation, suggesting it may have minimal predictive power or could be grouped into binary categories (single vs. others) to reduce sparsity.
   \item \textbf{Application Mode:} The large concentration in application mode 1 with several smaller categories indicates a high cardinality categorical variable with skewed representation. Rare categories might be grouped or encoded carefully to avoid noise and sparsity in the model.
@@ -335,30 +333,110 @@ In summary, categorical features with many rare categories (Application Mode, Co
 
 In summary, focus on reducing redundancy in highly correlated academic and family features through aggregation or dimensionality reduction, while dropping weakly correlated macroeconomic variables. Scaling is essential for features with varying ranges (e.g., age, grades) to ensure compatibility in machine learning pipelines.
 
-\subsection{Feature Engineering and Preprocessing}
-
-\subsubsection{Feature Engineering}
-
+\section{Preprocessing and Feature Engineering}
+\subsection{Preprocessing}
+\subsubsection*{Anomaly Cleaning}
+Although the dataset is reported to contain no missing (NaN) values, we nonetheless perform thorough data cleaning as follows to ensure integrity and consistency:
 \begin{lstlisting}[language=python]
-useless_cols = ['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP']
-df_prep = df_prep.drop(columns=useless_cols)
-
-col_func_map = {
-    'Marial Status': lambda x: marial(x),
-    'Application mode': lambda x: app_mode(x),
-    'Course': lambda x: course(x),
-    'Pre Qual': lambda x: pre_qual(x),
-    'Nationality': lambda x: nationality(x),
-    "Mom's Qual": lambda x: qual(x),
-    "Dad's Qual": lambda x: qual(x),
-    "Mom's Occupation": lambda x: moms_job(x),
-    "Dad's Occupation": lambda x: dads_job(x)
-}
-
-for col, func in col_func_map.items():
-    df_prep[col] = df_prep[col].apply(func)
+# Drop invalid ages (enroll age <17 or >70, or application order <0)
+df = df[(df['Enroll Age'] >= 17) & (df['Enroll Age'] <= 70)]
+df = df[df['Application order'] >= 0]
+# Drop invalid grades (admission or previous <95 or >190)
+df = df[(df['Admission grade'] >= 95) & (df['Admission grade'] <= 190)]
+df = df[(df['Pre Qual (grade)'] >= 95) & (df['Pre Qual (grade)'] <= 190)]
+# Drop invalid semester metrics (e.g., approved > enrolled, evaluations <0)
+for sem in ['1st', '2nd']:
+    df = df[df[f'{sem} - approved'] <= df[f'{sem} - enrolled']]
+    df = df[df[f'{sem} - evaluations'] >= 0]
+    df = df[df[f'{sem} - grade'] >= 0]
+# Drop rows with invalid binary/ordinal values (e.g., gender not 0/1)
+df = df[df['Gender'].isin([0, 1])]
+df = df[df['Scholarship'].isin([0, 1])]
+df = df[df['Tuition fees up to date'].isin([0, 1])]
 \end{lstlisting}
+\subsubsection*{Grouping Categorical Features}
+In the preprocessing pipeline, several categorical features with high cardinality or sparse codes were grouped into broader, more interpretable categories to reduce dimensionality, mitigate overfitting, and enhance model performance. This was implemented using custom mapping functions applied to the relevant DataFrame columns:
+\begin{lstlisting}[language=python]
+  df_prep = df_prep.drop(columns=['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP'])
+  col_func_map = {
+      'Marial Status': lambda x: marial(x),
+      'Application mode': lambda x: app_mode(x),
+      'Course': lambda x: course(x),
+      'Pre Qual': lambda x: pre_qual(x),
+      'Nationality': lambda x: nationality(x),
+      "Mom's Qual": lambda x: qual(x),
+      "Dad's Qual": lambda x: qual(x),
+      "Mom's Occupation": lambda x: moms_job(x),
+      "Dad's Occupation": lambda x: dads_job(x)
+  }
+  for col, func in col_func_map.items():
+      df_prep[col] = df_prep[col].apply(func)
+\end{lstlisting}
+Grouping decisions were informed by domain knowledge and the dataset documentation, where feature codes correspond to specific educational, occupational, or administrative groups. The motivations for this step include:
+\begin{itemize}
+  \item \textbf{Dimensionality Reduction:} Categorical features like Application mode (17 unique codes) or Course (17 codes) would produce sparse and high-dimensional encodings if left ungrouped. Grouping codes with similar meaning -- such as merging different types of "standard" admissions or combining related courses -- reduces this sparsity and enhances the stability of subsequent models.
+  \item \textbf{Interpretability:} Aggregating codes along logical groupings (e.g., collapsing educational qualifications into ``basic'', ``secondary'', and ``higher'' categories) results in features that are easier to interpret and reason with, both in exploratory analysis and model output.
+  \item \textbf{Handling Imbalance:} Many categorical codes have very few samples (e.g., rare nationalities or parental occupations); merging these rare categories prevents poorly-represented classes from introducing noise or overfitting.
+  \item \textbf{Leakage Avoidance:} All groupings were defined based only on code descriptions and situational knowledge, and were applied prior to any exposure to the outcome labels. Thus, target leakage is avoided.
+\end{itemize}
+This process ensures the resulting categorical variables are meaningful, compact, and suitable for downstream encoding and analysis (as shown in \textcolor{red}{preprocess.ipynb}):
 
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/target_by_categorical_preprocessed.png}
+  \caption{Grouped Categorical Features}
+  \label{grouped_cat}
+\end{figure}
+
+Post-grouping plots reveals consistent patterns: Socioeconomic advantages (higher parental education/occupation, scholarships) boost graduation, while non-standard admissions or manual backgrounds increase dropout risk. Imbalances persist (e.g., dominant groups skew distributions), necessitating stratified sampling and weighted metrics. Grouping reduced features from high-cardinality to 2-7 levels, improving efficiency (e.g., OHE dimensions from around 100 to around 30). In modeling, these features ranked moderately in importances, interacting with academics. Overall, this step enhanced predictive power and interpretability, enabling targeted educational strategies.
+\subsection{Feature Engineering}
+To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics (such as rates and deltas) that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses (e.g., \texttt{1st\_approval\_rate} at 0.147), outperforming raw counts by emphasizing success efficiency and academic momentum — critical signals for identifying dropout risk.
+\begin{lstlisting}[language=python]
+def create_engineered_features(df):
+    # Semester-level rates and averages
+    for sem in ['1st', '2nd']:
+        enrolled = df[f'{sem} - enrolled']
+        approved = df[f'{sem} - approved']
+        evaluations = df[f'{sem} - evaluations']
+        grade = df[f'{sem} - grade']
+        # Approval rate: approved / enrolled (zero-denominator safe)
+        df[f'{sem}_approval_rate'] = approved.divide(enrolled.replace(0, np.nan)).fillna(0)
+        # Evaluation rate: evaluations / enrolled
+        df[f'{sem}_evaluation_rate'] = evaluations.divide(enrolled.replace(0, np.nan)).fillna(0)
+        # Average grade: grade / evaluations
+        df[f'{sem}_avg_grade'] = grade.divide(evaluations.replace(0, np.nan)).fillna(0)
+    # Performance improvement deltas (2nd - 1st; for analysis)
+    df['delta_approval_rate'] = df['2nd_approval_rate'] - df['1st_approval_rate']
+    df['delta_avg_grade'] = df['2nd_avg_grade'] - df['1st_avg_grade']
+    # Age binning: four categories (0: <=20, 1: 21-24, 2: 25-30, 3: >30)
+    df['AgeGroup'] = pd.cut(
+        df['Enroll Age'],
+        bins=[-1, 20, 24, 30, np.inf],
+        labels=[0, 1, 2, 3]
+    ).astype(int)
+    # Optionally: drop delta features in final train/test to prevent future-data leakage
+    # df = df.drop(columns=['delta_approval_rate', 'delta_avg_grade'])
+    return df
+\end{lstlisting}
+The main derived features are:
+\begin{itemize}
+  \item \textbf{Semester-Level Rates:} For each semester (1st and 2nd), \texttt{approval\_rate} (approved/enrolled), \texttt{evaluation\_rate} (evaluations/enrolled), and \texttt{avg\_grade} (grade/evaluations) were computed with safeguards for division by zero. These normalized ratios deliver robust insights into academic engagement and success, better reflecting student trajectories than absolute counts—particularly in the context of varying enrollment loads.
+  \item \textbf{Improvement Deltas:} Differences between second and first semester rates were calculated to quantify progress or decline. While these helped analyze performance changes, they were omitted from final models to prevent introduction of future-data leakage.
+  \item \textbf{Age Grouping:} The continuous \texttt{Enroll Age} variable was binned into four interpretable categories (0: $\leq$ 20, 1: 21--24, 2: 25--30, 3: $>$ 30) to reduce noise and help models detect age-related risk factors, such as higher dropout rates among older students.
+\end{itemize}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/eng_feats.png}
+  \caption{Engineered Features}
+  \label{eng_feats}
+\end{figure}
+
+These visualizations reveal distinct distributional patterns that underscore the features' value in distinguishing outcomes. High approval/grade rates strongly favor Graduates, while negative deltas and older age groups signal dropout risk. These insights validate the engineering choices, as the new features capture normalized performance and trends more effectively than raw metrics, ranking highly in model importances and improving predictive separation without introducing bias. These enhancements improved both model interpretability and predictive accuracy by emphasizing relative academic performance, validated by the dominance of rate-based features in the model's importance rankings.
+
+\section{Training Pipelines}
+
+\section{Hypertuning Models}
 \newpage\section{Conclusion}
 
 This machine learning project successfully developed predictive models for student outcome classification, achieving over 77\% accuracy in identifying students who will graduate, remain enrolled, or dropout. The comprehensive feature engineering approach, particularly the creation of approval rates and performance delta metrics, significantly contributed to model performance.
