@@ -333,9 +333,8 @@ In summary, categorical features with many rare categories (Application Mode, Co
 
 In summary, focus on reducing redundancy in highly correlated academic and family features through aggregation or dimensionality reduction, while dropping weakly correlated macroeconomic variables. Scaling is essential for features with varying ranges (e.g., age, grades) to ensure compatibility in machine learning pipelines.
 
-\section{Preprocessing and Feature Engineering}
-\subsection{Preprocessing}
-\subsubsection*{Anomaly Cleaning}
+\section{Preprocessing}
+\subsection*{Anomaly Cleaning}
 Although the dataset is reported to contain no missing (NaN) values, we nonetheless perform thorough data cleaning as follows to ensure integrity and consistency:
 \begin{lstlisting}[language=python]
 # Drop invalid ages (enroll age <17 or >70, or application order <0)
@@ -354,7 +353,7 @@ df = df[df['Gender'].isin([0, 1])]
 df = df[df['Scholarship'].isin([0, 1])]
 df = df[df['Tuition fees up to date'].isin([0, 1])]
 \end{lstlisting}
-\subsubsection*{Grouping Categorical Features}
+\subsection*{Grouping Categorical Features}
 In the preprocessing pipeline, several categorical features with high cardinality or sparse codes were grouped into broader, more interpretable categories to reduce dimensionality, mitigate overfitting, and enhance model performance. This was implemented using custom mapping functions applied to the relevant DataFrame columns:
 \begin{lstlisting}[language=python]
   df_prep = df_prep.drop(columns=['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP'])
@@ -389,7 +388,11 @@ This process ensures the resulting categorical variables are meaningful, compact
 \end{figure}
 
 Post-grouping plots reveals consistent patterns: Socioeconomic advantages (higher parental education/occupation, scholarships) boost graduation, while non-standard admissions or manual backgrounds increase dropout risk. Imbalances persist (e.g., dominant groups skew distributions), necessitating stratified sampling and weighted metrics. Grouping reduced features from high-cardinality to 2-7 levels, improving efficiency (e.g., OHE dimensions from around 100 to around 30). In modeling, these features ranked moderately in importances, interacting with academics. Overall, this step enhanced predictive power and interpretability, enabling targeted educational strategies.
-\subsection{Feature Engineering}
+
+\section{Training Pipelines}
+The training process utilized the preprocessed and engineered dataset to build and evaluate multiclass classification models for predicting student outcomes. Focus was on tree-based ensembles — Random Forest and Gradient Boosting — due to their handling of mixed features and interpretability. The workflow included data splitting, pipeline construction, baseline training, hyperparameter tuning via randomized search, comprehensive evaluation, overfitting checks, feature importance analysis, and visualization of confusion matrices. All steps emphasized imbalance mitigation (stratified splits, class weights) and reproducibility (\texttt{random\_state}~$=42$).
+
+\section{Feature Engineering}
 To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics (such as rates and deltas) that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses (e.g., \texttt{1st\_approval\_rate} at 0.147), outperforming raw counts by emphasizing success efficiency and academic momentum — critical signals for identifying dropout risk.
 \begin{lstlisting}[language=python]
 def create_engineered_features(df):
@@ -420,22 +423,17 @@ def create_engineered_features(df):
 \end{lstlisting}
 The main derived features are:
 \begin{itemize}
-  \item \textbf{Semester-Level Rates:} For each semester (1st and 2nd), \texttt{approval\_rate} (approved/enrolled), \texttt{evaluation\_rate} (evaluations/enrolled), and \texttt{avg\_grade} (grade/evaluations) were computed with safeguards for division by zero. These normalized ratios deliver robust insights into academic engagement and success, better reflecting student trajectories than absolute counts—particularly in the context of varying enrollment loads.
+  \item \textbf{Semester-Level Rates:} For each semester (1st and 2nd), \texttt{approval\_rate} (approved/enrolled), \texttt{evaluation\_rate} (evaluations/enrolled), and \texttt{avg\_grade} (grade/evaluations) were computed with safeguards for division by zero. These normalized ratios deliver robust insights into academic engagement and success, better reflecting student trajectories than absolute counts — particularly in the context of varying enrollment loads.
   \item \textbf{Improvement Deltas:} Differences between second and first semester rates were calculated to quantify progress or decline. While these helped analyze performance changes, they were omitted from final models to prevent introduction of future-data leakage.
   \item \textbf{Age Grouping:} The continuous \texttt{Enroll Age} variable was binned into four interpretable categories (0: $\leq$ 20, 1: 21--24, 2: 25--30, 3: $>$ 30) to reduce noise and help models detect age-related risk factors, such as higher dropout rates among older students.
 \end{itemize}
-
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/eng_feats.png}
   \caption{Engineered Features}
   \label{eng_feats}
 \end{figure}
-
 These visualizations reveal distinct distributional patterns that underscore the features' value in distinguishing outcomes. High approval/grade rates strongly favor Graduates, while negative deltas and older age groups signal dropout risk. These insights validate the engineering choices, as the new features capture normalized performance and trends more effectively than raw metrics, ranking highly in model importances and improving predictive separation without introducing bias. These enhancements improved both model interpretability and predictive accuracy by emphasizing relative academic performance, validated by the dominance of rate-based features in the model's importance rankings.
-
-\section{Training Pipelines}
-
 \section{Hypertuning Models}
 \newpage\section{Conclusion}
 

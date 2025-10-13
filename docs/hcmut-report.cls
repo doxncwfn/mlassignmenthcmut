@@ -42,14 +42,17 @@
 \newcommand{\@uniname}{HO CHI MINH CITY UNIVERSITY OF TECHNOLOGY}
 \newcommand{\@deptname}{FACULTY OF COMPUTER SCIENCE AND ENGINEERING}
 \newcommand{\deptname}[1]{\renewcommand{\@deptname}{#1}}
-\newcommand{\@coursename}{Machine Learning}
+\newcommand{\@coursename}{CO3117 - Machine Learning}
 \newcommand{\coursename}[1]{\renewcommand{\@coursename}{#1}}
 \newcommand{\@reporttype}{Assigmment Report}
 \newcommand{\reporttype}[1]{\renewcommand{\@reporttype}{#1}}
 \renewcommand{\@title}{Predict Students' Dropout and Academic Success}
 \newcommand{\@advisor}{& Msc. Hung Nguyen Thanh &}
 \newcommand{\advisor}[1]{\renewcommand{\@advisor}{#1}}
-\newcommand{\@stuname}{& Cuong Doan Phuong Hung & ID 2310381}
+\newcommand{\@stuname}{
+  & Cuong Doan Phuong Hung & ID 2310381\\
+  & Dang Huynh Tran Hoc & ID 2210731\\
+  & Duc Nguyen Le Anh & ID 2210796}
 \newcommand{\stuname}[1]{\renewcommand{\@stuname}{#1}}
 \newcommand{\@reportplace}{Ho Chi Minh City}
 \newcommand{\reportplace}[1]{\renewcommand{\@reportplace}{#1}}
@@ -156,8 +159,8 @@
     \vfill
     \mdseries
     \begin{tabular}{rll}
-      Advisor: \@advisor \\
-      Student: \@stuname \\
+      Advisor: \@advisor  \\
+      Students: \@stuname \\
     \end{tabular}
     \vfill
 
