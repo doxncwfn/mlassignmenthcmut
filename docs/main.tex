@@ -390,10 +390,81 @@ This process ensures the resulting categorical variables are meaningful, compact
 Post-grouping plots reveals consistent patterns: Socioeconomic advantages (higher parental education/occupation, scholarships) boost graduation, while non-standard admissions or manual backgrounds increase dropout risk. Imbalances persist (e.g., dominant groups skew distributions), necessitating stratified sampling and weighted metrics. Grouping reduced features from high-cardinality to 2-7 levels, improving efficiency (e.g., OHE dimensions from around 100 to around 30). In modeling, these features ranked moderately in importances, interacting with academics. Overall, this step enhanced predictive power and interpretability, enabling targeted educational strategies.
 
 \section{Training Pipelines}
-The training process utilized the preprocessed and engineered dataset to build and evaluate multiclass classification models for predicting student outcomes. Focus was on tree-based ensembles — Random Forest and Gradient Boosting — due to their handling of mixed features and interpretability. The workflow included data splitting, pipeline construction, baseline training, hyperparameter tuning via randomized search, comprehensive evaluation, overfitting checks, feature importance analysis, and visualization of confusion matrices. All steps emphasized imbalance mitigation (stratified splits, class weights) and reproducibility (\texttt{random\_state}~$=42$).
+The training process utilized the preprocessed and engineered dataset to build and evaluate multiclass classification models for predicting student outcomes. The workflow included data splitting, pipeline construction, baseline training, hyperparameter tuning via randomized search, comprehensive evaluation, overfitting checks, feature importance analysis, and visualization of confusion matrices. All steps emphasized imbalance mitigation (stratified splits, class weights) and reproducibility (\texttt{random\_state}~$=42$).
+\begin{lstlisting}[language=python]
+preprocessor = ColumnTransformer(
+  transformers=[
+      ('num', RobustScaler(), numeric_cols),
+      ('cat', OneHotEncoder(handle_unknown='ignore', sparse_output=False), categorical_cols)],
+  remainder='drop'
+)
+\end{lstlisting}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{../pics/pipeline_pretrain.png}
+  \caption{Pretrain Pipelines}
+  \label{pretrain}
+\end{figure}
+
+\subsection{Model Selection}
+The dataset contains $4424$ instances with $36$ features, including numerical, categorical, and discrete integers, aimed at classifying students into dropout, enrolled, or graduate categories. It has no missing values but features strong class imbalance, making it ideal for educational predictive modeling to identify at-risk students early through machine learning classifiers. Focus was on tree-based ensembles — Random Forest and Gradient Boosting - due to their handling of mixed features and interpretability.
+\begin{lstlisting}[language=python]
+models = {
+    'RandomForest': RandomForestClassifier(n_estimators=400, max_depth=None, random_state=42, class_weight='balanced_subsample', n_jobs=-1),
+    'GradientBoosting': GradientBoostingClassifier(random_state=42)
+}
+\end{lstlisting}
+\subsubsection*{Random Forest Classifier}
+Random Forest works by creating an ensemble of multiple decision trees, each trained on a random subset of the data (bootstrapping) and features, then aggregating their predictions through majority voting for classification or averaging for regression. This reduces overfitting, handles variance well, and improves accuracy by leveraging diversity among the trees.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{../pics/rf.png}
+  \caption{Random Forest Classifier}
+  \label{rf_clf}
+\end{figure}
+Random Forest (RF) is suitable for this dataset as an ensemble method that builds multiple decision trees via bagging, effectively handling mixed feature types, non-linear relationships, and class imbalance with techniques like class weighting. It reduces overfitting through randomness and provides feature importance scores, offering interpretable insights into factors like socio-economic status or grades that influence dropout, while achieving robust performance on tabular data without extensive preprocessing.
+\subsubsection*{Gradient Boosting Classifier}
+Gradient Boosting builds trees sequentially, where each new tree corrects the errors of the previous ones by minimizing a loss function using gradient descent. It focuses on hard-to-predict instances, often achieving high performance through additive modeling, with regularization to prevent overfitting.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../pics/gb.png}
+  \caption{Gradient Boosting Classifier}
+  \label{gb_clf}
+\end{figure}
+Gradient Boosting excels by sequentially building trees to correct errors, capturing complex interactions and subtle patterns in the data better than single models. It addresses imbalance with built-in weighting and regularization to prevent overfitting, often yielding higher accuracy on imbalanced educational datasets, and includes feature importance for explaining predictions, making it a strong choice for model selection to optimize metrics like F1-score in student success forecasting.
+\subsection{Training And Evaluating Models}
+\subsubsection*{Traning Process}
+\begin{lstlisting}[language=python]
+for name, model in models.items():
+  pipe = Pipeline([
+      ('prep', preprocessor),
+      ('model', model)
+  ])
+  pipe.fit(X_train, y_train)
+  y_pred = pipe.predict(X_test)
+\end{lstlisting}
+\subsubsection*{Evaluating}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/precision_recall_curve.png}
+  \caption{Precision - Recall Curve}
+  \label{pr_curve}
+\end{figure}
+Overall, both models demonstrate the typical precision-recall tradeoff, with precision increasing and recall decreasing as the decision threshold rises. The Gradient Boosting curves are generally smoother and exhibit steeper transitions, particularly for the Enrolled class, indicating better probability calibration and sharper discrimination across thresholds. The Random Forest curves, while broadly following the same trend, show more variability - especially minor fluctuations in recall for the Enrolled group - likely a reflection of the model's inherent randomness due to bagging.\\
+
+For the majority class (Graduate), both precision and recall remain consistently high and stable, as expected due to class imbalance favoring this group. In contrast, the minority class (Enrolled) presents erratic, lower precision and recall curves, highlighting difficulty in separating this group from others - a common challenge in imbalanced datasets, even when using class weights. Notably, GB attains slightly higher precision at mid-range thresholds (0.4-0.6), particularly for Enrolled, and this aligns with its marginally superior F1\_macro score ($0.717$ versus RF's $0.706$). This advantage suggests that \textit{GB more effectively balances} precision and recall for underrepresented classes, reaffirming its selection for optimizing imbalanced multi-class problems.
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/eval.png}
+  \includegraphics[width=\textwidth]{../images/confusion_matrix.png}
+  \caption{Some Evaluation Metrics}
+  \label{eval_metrics}
+\end{figure}
+\paragraph*{Key Insights:} Gradient Boosting stands out for its superior probability calibration and precision/recall control, making it advantageous for imbalanced multiclass outcomes where targeted interventions for minority classes are critical. Its consistent macro-averaged F1-score further supports selection. Random Forest, while slightly less precise in calibrated probabilities, offers robustness to noise and outliers-potentially benefiting settings with more heterogeneous or noisy input features. Both approaches, particularly when augmented with tailored thresholding and interpretability measures, provide actionable insights for institutional policies: enabling risk stratification, resource prioritization, and improved support for students most susceptible to adverse outcomes.
+
 
 \section{Feature Engineering}
-To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics (such as rates and deltas) that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses (e.g., \texttt{1st\_approval\_rate} at 0.147), outperforming raw counts by emphasizing success efficiency and academic momentum — critical signals for identifying dropout risk.
+To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics (such as rates and deltas) that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses (e.g., \texttt{1st\_approval\_rate} at $0.147$), outperforming raw counts by emphasizing success efficiency and academic momentum — critical signals for identifying dropout risk.
 \begin{lstlisting}[language=python]
 def create_engineered_features(df):
     # Semester-level rates and averages
@@ -417,8 +488,6 @@ def create_engineered_features(df):
         bins=[-1, 20, 24, 30, np.inf],
         labels=[0, 1, 2, 3]
     ).astype(int)
-    # Optionally: drop delta features in final train/test to prevent future-data leakage
-    # df = df.drop(columns=['delta_approval_rate', 'delta_avg_grade'])
     return df
 \end{lstlisting}
 The main derived features are:
