@@ -170,12 +170,11 @@
 \fancyfoot{}
 \coverpage\clearpage
 
-\tableofcontents
-\listoffigures
-\clearpage
+\tableofcontents\clearpage
+\listoffigures\clearpage
 
 \setcounter{page}{1}
-\fancyfoot[L]{\scriptsize \ttfamily Machine Learning\\1$^{\texttt{st}}$ Semester -- Academic year 2025-2026}
+\fancyfoot[L]{\scriptsize \ttfamily Machine Learning Assignment Report\\1$^{\texttt{st}}$ Semester -- Academic year 2025-2026}
 \fancyfoot[R]{\scriptsize \ttfamily Page {\thepage}/\pageref{LastPage}}
 
 \section{Objectives}
@@ -202,15 +201,15 @@ This assignment, part of an introductory Machine Learning course, focuses on app
 
 \subsubsection*{Primary Goal}
 
-The primary goal is to predict student outcomes as a three-class classification problem: Graduate (completed the degree on time), Enrolled (still ongoing at the end of normal duration), or Dropout (left the institution). This supports early intervention strategies to reduce dropout rates. The dataset has no missing values, and preprocessing was performed to handle anomalies and outliers. It is licensed under CC BY 4.0 and sourced from Realinho et al. (2021). Through these objectives, the project not only applies core machine learning concepts such as pipelines, tuning, and evaluation, but also highlights the importance of ethical modeling in sensitive domains like education, where biased or leaky predictions could mislead interventions.
+The primary goal is to predict student outcomes as a three-class classification problem: Graduate (completed the degree on time), Enrolled (still ongoing at the end of normal duration), or Dropout (left the institution). This supports early intervention strategies to reduce dropout rates. The dataset has no missing values, and preprocessing was performed to handle anomalies and outliers. Through these objectives, the project not only applies core machine learning concepts such as pipelines, tuning, and evaluation, but also highlights the importance of ethical modeling in sensitive domains like education, where biased or leaky predictions could mislead interventions.
 
-\section{Dataset Overview and Visualization}
+\section{Dataset Insights}
 \subsection{Data Loading and Initial Inspection}
 
 The dataset was loaded from a CSV file (\texttt{data.csv}) into a Pandas DataFrame for analysis. Initial inspection revealed the following key details:
 
 \begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt]
-  \item \textbf{Shape:} The dataset consists of \textbf{4424} rows (instances) and \textbf{37} columns (36 features + 1 target variable). For more details about each features please access \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{UCI Machine Learning Repository}}.
+  \item \textbf{Shape:} The dataset consists of \textbf{4424} rows (instances) and \textbf{37} columns (36 features + 1 target variable). For more details about each features' information please access \href{https://archive.ics.uci.edu/dataset/697/predict+students+dropout+and+academic+success}{\textit{UCI Machine Learning Repository}}.
   \item \textbf{Target Variable:} \texttt{Target} is the multiclass label with three categories:\\
         \begin{minipage}{0.48\textwidth}
           \begin{itemize}
@@ -224,7 +223,7 @@ The dataset was loaded from a CSV file (\texttt{data.csv}) into a Pandas DataFra
         \begin{minipage}{0.48\textwidth}
           \begin{figure}[H]
             \centering
-            \includegraphics[width=0.85\textwidth]{../images/target_distribution.png}
+            \includegraphics[width=0.9\textwidth]{../images/target_distribution.png}
             \caption{Target Distribution}
             \label{target-distribution}
           \end{figure}
@@ -268,7 +267,7 @@ These insights inform both preprocessing and model development by clarifying typ
 
 Visualizations were generated using \texttt{Matplotlib} and \texttt{Seaborn} to explore distributions, relationships, and patterns. All figures were saved to the images directory for inclusion in the report. Key visualizations and insights are described below.
 
-\subsubsection{Numerical Feature Distributions (Histograms)}
+\subsubsection{Numerical Feature Distributions}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/numeric_histograms.png}
@@ -290,7 +289,7 @@ The histograms with kernel density estimates (KDE) for selected numerical featur
 
 In summary, skewed features like age and approvals benefit from transformations (log/sqrt) to approximate normality for parametric models, while grades may require robust scaling due to multimodality. Outlier clipping and zero-handling are crucial for academic metrics to avoid bias in predictions of student success.
 
-\subsubsection{Key Categorical Distribution}
+\subsubsection{Key Categorical Features Distribution}
 
 \begin{figure}[H]
   \centering
@@ -354,7 +353,7 @@ df = df[df['Scholarship'].isin([0, 1])]
 df = df[df['Tuition fees up to date'].isin([0, 1])]
 \end{lstlisting}
 \subsection*{Grouping Categorical Features}
-In the preprocessing pipeline, several categorical features with high cardinality or sparse codes were grouped into broader, more interpretable categories to reduce dimensionality, mitigate overfitting, and enhance model performance. This was implemented using custom mapping functions applied to the relevant DataFrame columns:
+In the preprocessing pipeline, several categorical features with high cardinality or sparse codes were grouped into broader, more interpretable categories to reduce dimensionality, mitigate overfitting, and enhance model performance.
 \begin{lstlisting}[language=python]
   df_prep = df_prep.drop(columns=['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP'])
   col_func_map = {
@@ -373,16 +372,16 @@ In the preprocessing pipeline, several categorical features with high cardinalit
 \end{lstlisting}
 Grouping decisions were informed by domain knowledge and the dataset documentation, where feature codes correspond to specific educational, occupational, or administrative groups. The motivations for this step include:
 \begin{itemize}
-  \item \textbf{Dimensionality Reduction:} Categorical features like Application mode (17 unique codes) or Course (17 codes) would produce sparse and high-dimensional encodings if left ungrouped. Grouping codes with similar meaning -- such as merging different types of "standard" admissions or combining related courses -- reduces this sparsity and enhances the stability of subsequent models.
+  \item \textbf{Dimensionality Reduction:} Categorical features like Application mode or Course would produce sparse and high-dimensional encodings if left ungrouped. Grouping codes with similar meaning reduces this sparsity and enhances the stability of subsequent models.
   \item \textbf{Interpretability:} Aggregating codes along logical groupings (e.g., collapsing educational qualifications into ``basic'', ``secondary'', and ``higher'' categories) results in features that are easier to interpret and reason with, both in exploratory analysis and model output.
-  \item \textbf{Handling Imbalance:} Many categorical codes have very few samples (e.g., rare nationalities or parental occupations); merging these rare categories prevents poorly-represented classes from introducing noise or overfitting.
+  \item \textbf{Handling Imbalance:} Many categorical codes have very few samples merging these rare categories prevents poorly-represented classes from introducing noise or overfitting.
   \item \textbf{Leakage Avoidance:} All groupings were defined based only on code descriptions and situational knowledge, and were applied prior to any exposure to the outcome labels. Thus, target leakage is avoided.
 \end{itemize}
 This process ensures the resulting categorical variables are meaningful, compact, and suitable for downstream encoding and analysis (as shown in \textcolor{red}{preprocess.ipynb}):
 
 \begin{figure}[H]
   \centering
-  \includegraphics[width=\textwidth]{../images/target_by_categorical_preprocessed.png}
+  \includegraphics[width=0.95\textwidth]{../images/target_by_categorical_preprocessed.png}
   \caption{Grouped Categorical Features}
   \label{grouped_cat}
 \end{figure}
@@ -402,7 +401,7 @@ preprocessor = ColumnTransformer(
 \begin{figure}[H]
   \centering
   \includegraphics[width=0.9\textwidth]{../pics/pipeline_pretrain.png}
-  \caption{Pretrain Pipelines}
+  \caption{Pretrain Pipeline}
   \label{pretrain}
 \end{figure}
 
@@ -450,9 +449,9 @@ for name, model in models.items():
   \caption{Precision - Recall Curve}
   \label{pr_curve}
 \end{figure}
-Overall, both models demonstrate the typical precision-recall tradeoff, with precision increasing and recall decreasing as the decision threshold rises. The Gradient Boosting curves are generally smoother and exhibit steeper transitions, particularly for the Enrolled class, indicating better probability calibration and sharper discrimination across thresholds. The Random Forest curves, while broadly following the same trend, show more variability - especially minor fluctuations in recall for the Enrolled group - likely a reflection of the model's inherent randomness due to bagging.\\
+Overall, both models demonstrate the typical precision-recall tradeoff, with precision increasing and recall decreasing as the decision threshold rises. Gradient Boosting curves are smoother and exhibit steeper transitions, especially for the Enrolled class, indicating better probability calibration and sharper discrimination across thresholds. The Random Forest curves, while broadly following the same trend, show more variability—especially minor fluctuations in recall for the Enrolled group—likely a reflection of the model's inherent randomness due to bagging.\\
 
-For the majority class (Graduate), both precision and recall remain consistently high and stable, as expected due to class imbalance favoring this group. In contrast, the minority class (Enrolled) presents erratic, lower precision and recall curves, highlighting difficulty in separating this group from others - a common challenge in imbalanced datasets, even when using class weights. Notably, GB attains slightly higher precision at mid-range thresholds (0.4-0.6), particularly for Enrolled, and this aligns with its marginally superior F1\_macro score ($0.717$ versus RF's $0.706$). This advantage suggests that \textit{GB more effectively balances} precision and recall for underrepresented classes, reaffirming its selection for optimizing imbalanced multi-class problems.
+For the majority class (Graduate), both precision and recall remain consistently high and stable, as expected due to class imbalance favoring this group. In contrast, the minority class (Enrolled) presents erratic, lower precision and recall curves, highlighting difficulty in separating this group from others - a common challenge in imbalanced datasets, even when using class weights. Notably, GB attains slightly higher precision at mid-range thresholds, particularly for Enrolled, and this aligns with its marginally superior F1\_macro score. This advantage suggests that \textit{GB more effectively balances} precision and recall for underrepresented classes, reaffirming its selection for optimizing imbalanced multi-class problems.
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/eval.png}
@@ -460,11 +459,28 @@ For the majority class (Graduate), both precision and recall remain consistently
   \caption{Some Evaluation Metrics}
   \label{eval_metrics}
 \end{figure}
-\paragraph*{Key Insights:} Gradient Boosting stands out for its superior probability calibration and precision/recall control, making it advantageous for imbalanced multiclass outcomes where targeted interventions for minority classes are critical. Its consistent macro-averaged F1-score further supports selection. Random Forest, while slightly less precise in calibrated probabilities, offers robustness to noise and outliers-potentially benefiting settings with more heterogeneous or noisy input features. Both approaches, particularly when augmented with tailored thresholding and interpretability measures, provide actionable insights for institutional policies: enabling risk stratification, resource prioritization, and improved support for students most susceptible to adverse outcomes.
+\paragraph*{Key Insights:}
+\begin{itemize}
+  \item \textbf{Gradient Boosting} excels in probability calibration and precision/recall control, making it especially suitable for imbalanced multiclass problems where identifying and supporting minority classes is vital. Its consistently strong macro-averaged F1-score provides additional support for its selection in such contexts.
+  \item \textbf{Random Forest} - while somewhat less precise with calibrated probabilities - provides robustness to noise and outliers, making it valuable when input features are heterogeneous or noisy.
+  \item Both models, particularly when complemented by customized threshold selection and interpretability tools, enable actionable insights for institutions: facilitating risk stratification, optimally directing resources, and improving support for students most at risk of adverse outcomes.
+\end{itemize}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/top_10_feature_importances_overlap.png}
+  \caption{Top 10 Feature Importances}
+  \label{top10_features}
+\end{figure}
 
+Both models highlight academic performance in the early semesters as key predictors of student outcomes, aligning with intuitive expectations: early success (or failure) often signals overall trajectory in higher education. However, the models differ significantly in how they distribute importance, reflecting their algorithmic differences - Random Forest (an ensemble of independent trees) tends to spread importance more evenly, while Gradient Boosting (sequential error-correcting trees) can concentrate on a few dominant features.
+\begin{itemize}
+  \item \textbf{Gradient Boosting:} High concentration on one feature indicates potential efficiency but risks over-reliance if this feature is noisy or correlated. This makes Gradient Boosting sensitive to second-semester data.
+  \item \textbf{Random Forest:} The even distribution reflects it's bagging approach, averaging across diverse trees to reduce variance. This makes it less prone to overemphasizing one feature, potentially leading to more generalizable insights.
+\end{itemize}
 
-\section{Feature Engineering}
-To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics (such as rates and deltas) that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses (e.g., \texttt{1st\_approval\_rate} at $0.147$), outperforming raw counts by emphasizing success efficiency and academic momentum — critical signals for identifying dropout risk.
+\section{Enhancing Models}
+\subsection{Feature Engineering}
+To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses, outperforming raw counts by emphasizing success efficiency and academic momentum - critical signals for identifying dropout risk.
 \begin{lstlisting}[language=python]
 def create_engineered_features(df):
     # Semester-level rates and averages
@@ -490,33 +506,150 @@ def create_engineered_features(df):
     ).astype(int)
     return df
 \end{lstlisting}
+
 The main derived features are:
 \begin{itemize}
-  \item \textbf{Semester-Level Rates:} For each semester (1st and 2nd), \texttt{approval\_rate} (approved/enrolled), \texttt{evaluation\_rate} (evaluations/enrolled), and \texttt{avg\_grade} (grade/evaluations) were computed with safeguards for division by zero. These normalized ratios deliver robust insights into academic engagement and success, better reflecting student trajectories than absolute counts — particularly in the context of varying enrollment loads.
+  \item \textbf{Semester-Level Rates:} For each semester, \texttt{approval\_rate}, \texttt{evaluation\_rate}, and \texttt{avg\_grade} were computed with safeguards for division by zero. These normalized ratios deliver robust insights into academic engagement and success, better reflecting student trajectories than absolute counts.
   \item \textbf{Improvement Deltas:} Differences between second and first semester rates were calculated to quantify progress or decline. While these helped analyze performance changes, they were omitted from final models to prevent introduction of future-data leakage.
-  \item \textbf{Age Grouping:} The continuous \texttt{Enroll Age} variable was binned into four interpretable categories (0: $\leq$ 20, 1: 21--24, 2: 25--30, 3: $>$ 30) to reduce noise and help models detect age-related risk factors, such as higher dropout rates among older students.
+  \item \textbf{Age Grouping:} The continuous \texttt{Enroll Age} variable was binned into four interpretable categories (0: $\leq$ 20, 1: 21--24, 2: 25--30, 3: $>$ 30) to reduce noise and help models detect age-related risk factors.
 \end{itemize}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/eng_feats.png}
-  \caption{Engineered Features}
+  \caption{New Features Distribution}
   \label{eng_feats}
 \end{figure}
+
 These visualizations reveal distinct distributional patterns that underscore the features' value in distinguishing outcomes. High approval/grade rates strongly favor Graduates, while negative deltas and older age groups signal dropout risk. These insights validate the engineering choices, as the new features capture normalized performance and trends more effectively than raw metrics, ranking highly in model importances and improving predictive separation without introducing bias. These enhancements improved both model interpretability and predictive accuracy by emphasizing relative academic performance, validated by the dominance of rate-based features in the model's importance rankings.
-\section{Hypertuning Models}
+\subsection{Retrained Models' Evaluation}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/precision_recall_curve_enhanced.png}
+  \caption{Enhanced Models' Precision - Recall Curve}
+  \label{pr_curve_enhanced}
+\end{figure}
+
+Feature engineering and hyperparameter tuning have clearly enhanced model performance. The post-tuning curves show improved precision, more stable recall, and better overall trade-offs -- especially for the previously unstable Enrolled class. These improvements indicate more confident and reliable model predictions across all classes. Comparing models, Gradient Boosting generally shows smoother precision-recall trends than Random Forest, especially for the Graduate and Dropout classes. It also tends to achieve slightly higher precision at higher thresholds. However, both models struggle similarly with the Enrolled class, suggesting the issue lies more with the data than the model itself.\\
+
+After retraining with the engineered features and tuned hyperparameters, both models showed improved performance, especially in handling the class imbalance:
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../pics/metrics_enhanced.png}
+  \includegraphics[width=\textwidth]{../images/confusion_matrix_enhanced.png}
+  \caption{Enhanced Models' Metrics}
+  \label{metrics_enhanced}
+\end{figure}
+While the accuracy lift was modest, the macro F1-score and ROC-AUC scores improved, indicating a better balance in predicting the minority classes. The new feature importances confirmed the value of feature engineering, with \texttt{2nd\_approval\_rate} becoming the top predictor for the tuned Random Forest model. An overfitting analysis showed the difference between cross-validation and test scores was minimal and acceptable for both models.
+
+\subsection{Hyperparameter Tuning}
+\textbf{Set up}
+\begin{itemize}[itemsep=0pt, topsep=0pt, label=---]
+  \item A custom scoring function using macro-averaged F1 (\texttt{f1\_scorer}) is created. This metric gives equal weight to each class, making it well-suited for imbalanced problems where accuracy alone could be misleading.
+  \item Cross-validation is configured using \texttt{StratifiedKFold} (\texttt{cv}) with 5 splits and shuffling. This ensures the proportion of each class is maintained in all folds, preventing bias during training and model evaluation.
+  \item Class-balanced sample weights (\texttt{sample\_weights}) are computed for \texttt{y\_train} using sklearn's 'balanced' strategy. These weights can be supplied to models so that each class has an appropriate influence in the loss, offsetting the effects of class imbalance and helping avoid bias toward the majority class.
+\end{itemize}
+\begin{lstlisting}[language=python]
+# Custom scorer for imbalanced data
+f1_scorer = make_scorer(f1_score, average='macro')
+# Setup cross-validation with proper stratification
+cv = StratifiedKFold(n_splits=5, shuffle=True, random_state=42)
+sample_weights = compute_sample_weight('balanced', y_train);
+\end{lstlisting}
+
+\subsubsection{Random Forest}
+To optimize the Random Forest model, a hyperparameter tuning pipeline was constructed using Scikit-learn's \textit{Pipeline} and \textit{RandomizedSearchCV}. This approach ensures that preprocessing steps are properly applied within each cross-validation fold, preventing data leakage and leading to a more reliable evaluation of the model's performance.\\
+\textbf{Tuning Pipeline}
+\begin{lstlisting}[language=python]
+# Parameter grids
+rf_param_grid = {
+  'n_estimators': [300, 400, 500],
+  'max_depth': [20, 25, 30],
+  'min_samples_split': [5, 10, 15],
+  'min_samples_leaf': [2, 4, 6],
+  'max_features': ['sqrt', 'log2'],
+  'class_weight': ['balanced_subsample'],
+  'criterion': ['gini', 'entropy']
+}
+# Create pipelines outside of search
+def create_rf_pipeline():
+    return Pipeline([
+        ('preprocessor', preprocessor),
+        ('classifier', RandomForestClassifier(random_state=42, n_jobs=-1))
+    ])
+\end{lstlisting}
+\textbf{Hyperparameter Tuning Process}
+\begin{lstlisting}[language=python]
+rf_search = RandomizedSearchCV(
+  create_rf_pipeline(),
+  param_distributions={'classifier__' + k: v for k, v in rf_param_grid.items()},
+  n_iter=50,
+  scoring={'f1_macro': f1_scorer, 'accuracy': 'accuracy'}, refit='accuracy',
+  cv=cv,
+  random_state=42,
+  n_jobs=-1,
+  verbose=0,
+  return_train_score=True
+)
+
+rf_search.fit(X_train, y_train)
+\end{lstlisting}
+\subsubsection{Gradient Boosting}
+\textbf{Tuning Pipeline}
+\begin{lstlisting}[language=python]
+# Parameter grids
+gb_param_grid = {
+    'n_estimators': [100, 200, 300],
+    'learning_rate': [0.01, 0.05, 0.1, 0.15],
+    'max_depth': [3, 5, 7, 9],
+    'min_samples_split': [10, 20, 30],
+    'min_samples_leaf': [5, 10, 15],
+    'subsample': [0.8, 0.9, 1.0],
+}
+# Create pipelines outside of search
+def create_gb_pipeline():
+    return Pipeline([
+        ('preprocessor', preprocessor),
+        ('classifier', GradientBoostingClassifier(random_state=42))
+    ])
+
+\end{lstlisting}
+\textbf{Hyperparameter Tuning Process}
+\begin{lstlisting}[language=python]
+gb_search = RandomizedSearchCV(
+  create_gb_pipeline(),
+  param_distributions={'classifier__' + k: v for k, v in gb_param_grid.items()},
+  n_iter=50,
+  scoring={'f1_macro': f1_scorer, 'accuracy': 'accuracy'}, refit='accuracy',
+  cv=cv,
+  random_state=42,
+  n_jobs=-1,
+  verbose=0,
+  return_train_score=True
+)
+
+gb_search.fit(X_train, y_train, classifier__sample_weight=sample_weights)
+\end{lstlisting}
+\subsection{Evaluations}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/top10_feature_importances_enhanced.png}
+  \caption{Enhanced Models' Top 10 Feature Importances}
+  \label{top10_enhanced}
+\end{figure}
+\newpage\section{Ensemble Learning}
+\begin{minipage}{0.4\textwidth}
+  \centering
+  \includegraphics[width=\textwidth]{../pics/voting_pipeline.png}
+  \captionof{figure}{Voting Pipeline}
+  \label{pipe_vote}
+\end{minipage}
 \newpage\section{Conclusion}
 
 This machine learning project successfully developed predictive models for student outcome classification, achieving over 77\% accuracy in identifying students who will graduate, remain enrolled, or dropout. The comprehensive feature engineering approach, particularly the creation of approval rates and performance delta metrics, significantly contributed to model performance.
 
 The systematic workflow from data exploration through hyperparameter optimization demonstrates best practices in machine learning project development. The results provide a foundation for implementing early warning systems in educational institutions to identify at-risk students and enable timely interventions.
 
-\subsection{Future Work}
+% \begin{thebibliography}{9}
 
-\begin{itemize}
-  \item Investigation of additional ensemble methods
-  \item Implementation of deep learning approaches
-  \item Integration of temporal sequence modeling
-  \item Development of interpretability frameworks for model decisions
-\end{itemize}
-
+% \end{thebibliography}
 \end{document}

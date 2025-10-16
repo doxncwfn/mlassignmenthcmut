@@ -62,10 +62,10 @@
 % Configurations
 \geometry{
   paper=a4paper,
-  left=2.5cm,
-  right=2.5cm,
+  left=2cm,
+  right=2cm,
   top=2cm,
-  bottom=2cm,
+  bottom=1.8cm,
   includeheadfoot=true,
   headheight=35pt
 }

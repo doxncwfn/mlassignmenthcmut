@@ -95,6 +95,7 @@ latexmk -pdf main.tex
    - Evaluation: Multi-class classification with macro-averaged F1 score
 
 3. **Hyperparameter Optimization**:
+
    - Uses `RandomizedSearchCV` for efficient parameter space exploration
    - Handles class imbalance through balanced sampling and custom scoring
    - Separate parameter grids for each model type

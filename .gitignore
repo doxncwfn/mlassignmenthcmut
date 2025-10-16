@@ -34,5 +34,4 @@ pics/
 *.synctex.gz
 
 # Excalidraw files
-*.excalidraw
-*.excalidraw.svg
+excalidraw/
