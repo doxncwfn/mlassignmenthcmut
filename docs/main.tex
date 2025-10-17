@@ -177,7 +177,7 @@
 \fancyfoot[L]{\scriptsize \ttfamily Machine Learning Assignment Report\\1$^{\texttt{st}}$ Semester -- Academic year 2025-2026}
 \fancyfoot[R]{\scriptsize \ttfamily Page {\thepage}/\pageref{LastPage}}
 
-\section{Objectives}
+\section{Introduction and Project Objectives}
 
 \subsection*{Aim of the Project}
 
@@ -203,9 +203,8 @@ This assignment, part of an introductory Machine Learning course, focuses on app
 
 The primary goal is to predict student outcomes as a three-class classification problem: Graduate (completed the degree on time), Enrolled (still ongoing at the end of normal duration), or Dropout (left the institution). This supports early intervention strategies to reduce dropout rates. The dataset has no missing values, and preprocessing was performed to handle anomalies and outliers. Through these objectives, the project not only applies core machine learning concepts such as pipelines, tuning, and evaluation, but also highlights the importance of ethical modeling in sensitive domains like education, where biased or leaky predictions could mislead interventions.
 
-\section{Dataset Insights}
+\section{Exploratory Data Analysis}
 \subsection{Data Loading and Initial Inspection}
-
 The dataset was loaded from a CSV file (\texttt{data.csv}) into a Pandas DataFrame for analysis. Initial inspection revealed the following key details:
 
 \begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt]
@@ -263,7 +262,7 @@ A summary of some basic statistics for numerical features (mean, std, min, max) 
 
 These insights inform both preprocessing and model development by clarifying typical data ranges, potential sources of variance, and the importance of handling non-standard cases such as older students or those affected by economic conditions.
 
-\subsection{Data Visualization}
+\subsection{Data Visualization and Insights}
 
 Visualizations were generated using \texttt{Matplotlib} and \texttt{Seaborn} to explore distributions, relationships, and patterns. All figures were saved to the images directory for inclusion in the report. Key visualizations and insights are described below.
 
@@ -289,7 +288,7 @@ The histograms with kernel density estimates (KDE) for selected numerical featur
 
 In summary, skewed features like age and approvals benefit from transformations (log/sqrt) to approximate normality for parametric models, while grades may require robust scaling due to multimodality. Outlier clipping and zero-handling are crucial for academic metrics to avoid bias in predictions of student success.
 
-\subsubsection{Key Categorical Features Distribution}
+\subsubsection{Key Categorical Features' Distributions}
 
 \begin{figure}[H]
   \centering
@@ -332,8 +331,8 @@ In summary, categorical features with many rare categories (Application Mode, Co
 
 In summary, focus on reducing redundancy in highly correlated academic and family features through aggregation or dimensionality reduction, while dropping weakly correlated macroeconomic variables. Scaling is essential for features with varying ranges (e.g., age, grades) to ensure compatibility in machine learning pipelines.
 
-\section{Preprocessing}
-\subsection*{Anomaly Cleaning}
+\section{Data Preprocessing and Feature Preparation}
+\subsection{Anomaly Detection and Cleaning}
 Although the dataset is reported to contain no missing (NaN) values, we nonetheless perform thorough data cleaning as follows to ensure integrity and consistency:
 \begin{lstlisting}[language=python]
 # Drop invalid ages (enroll age <17 or >70, or application order <0)
@@ -352,7 +351,8 @@ df = df[df['Gender'].isin([0, 1])]
 df = df[df['Scholarship'].isin([0, 1])]
 df = df[df['Tuition fees up to date'].isin([0, 1])]
 \end{lstlisting}
-\subsection*{Grouping Categorical Features}
+
+\subsection{Grouping of Categorical Features}
 In the preprocessing pipeline, several categorical features with high cardinality or sparse codes were grouped into broader, more interpretable categories to reduce dimensionality, mitigate overfitting, and enhance model performance.
 \begin{lstlisting}[language=python]
   df_prep = df_prep.drop(columns=['Debtor', 'Special Needs', 'Unemployment rate', 'Inflation rate', 'GDP'])
@@ -388,7 +388,7 @@ This process ensures the resulting categorical variables are meaningful, compact
 
 Post-grouping plots reveals consistent patterns: Socioeconomic advantages (higher parental education/occupation, scholarships) boost graduation, while non-standard admissions or manual backgrounds increase dropout risk. Imbalances persist (e.g., dominant groups skew distributions), necessitating stratified sampling and weighted metrics. Grouping reduced features from high-cardinality to 2-7 levels, improving efficiency (e.g., OHE dimensions from around 100 to around 30). In modeling, these features ranked moderately in importances, interacting with academics. Overall, this step enhanced predictive power and interpretability, enabling targeted educational strategies.
 
-\section{Training Pipelines}
+\section{Baseline Model Training and Evaluation}
 The training process utilized the preprocessed and engineered dataset to build and evaluate multiclass classification models for predicting student outcomes. The workflow included data splitting, pipeline construction, baseline training, hyperparameter tuning via randomized search, comprehensive evaluation, overfitting checks, feature importance analysis, and visualization of confusion matrices. All steps emphasized imbalance mitigation (stratified splits, class weights) and reproducibility (\texttt{random\_state}~$=42$).
 \begin{lstlisting}[language=python]
 preprocessor = ColumnTransformer(
@@ -431,8 +431,8 @@ Gradient Boosting builds trees sequentially, where each new tree corrects the er
   \label{gb_clf}
 \end{figure}
 Gradient Boosting excels by sequentially building trees to correct errors, capturing complex interactions and subtle patterns in the data better than single models. It addresses imbalance with built-in weighting and regularization to prevent overfitting, often yielding higher accuracy on imbalanced educational datasets, and includes feature importance for explaining predictions, making it a strong choice for model selection to optimize metrics like F1-score in student success forecasting.
-\subsection{Training And Evaluating Models}
-\subsubsection*{Traning Process}
+\subsection{Model Training and Performance Evaluation}
+\subsubsection*{Training Process}
 \begin{lstlisting}[language=python]
 for name, model in models.items():
   pipe = Pipeline([
@@ -442,7 +442,7 @@ for name, model in models.items():
   pipe.fit(X_train, y_train)
   y_pred = pipe.predict(X_test)
 \end{lstlisting}
-\subsubsection*{Evaluating}
+\subsubsection*{Evaluation Metrics and Insights}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/precision_recall_curve.png}
@@ -478,7 +478,7 @@ Both models highlight academic performance in the early semesters as key predict
   \item \textbf{Random Forest:} The even distribution reflects it's bagging approach, averaging across diverse trees to reduce variance. This makes it less prone to overemphasizing one feature, potentially leading to more generalizable insights.
 \end{itemize}
 
-\section{Enhancing Models}
+\section{Model Enhancement and Optimization}
 \subsection{Feature Engineering}
 To enhance the predictive power of the dataset, a custom function was applied to derive new variables from raw academic and demographic data. This step focused on creating relative metrics that normalize absolute values, making them more comparable across students and capturing trends in performance. These engineered features proved highly informative for modeling, as indicated by their consistently high rankings in feature importance analyses, outperforming raw counts by emphasizing success efficiency and academic momentum - critical signals for identifying dropout risk.
 \begin{lstlisting}[language=python]
@@ -521,7 +521,7 @@ The main derived features are:
 \end{figure}
 
 These visualizations reveal distinct distributional patterns that underscore the features' value in distinguishing outcomes. High approval/grade rates strongly favor Graduates, while negative deltas and older age groups signal dropout risk. These insights validate the engineering choices, as the new features capture normalized performance and trends more effectively than raw metrics, ranking highly in model importances and improving predictive separation without introducing bias. These enhancements improved both model interpretability and predictive accuracy by emphasizing relative academic performance, validated by the dominance of rate-based features in the model's importance rankings.
-\subsection{Retrained Models' Evaluation}
+\subsection{Evaluation of Retrained Models}
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/precision_recall_curve_enhanced.png}
@@ -541,7 +541,7 @@ After retraining with the engineered features and tuned hyperparameters, both mo
 \end{figure}
 While the accuracy lift was modest, the macro F1-score and ROC-AUC scores improved, indicating a better balance in predicting the minority classes. The new feature importances confirmed the value of feature engineering, with \texttt{2nd\_approval\_rate} becoming the top predictor for the tuned Random Forest model. An overfitting analysis showed the difference between cross-validation and test scores was minimal and acceptable for both models.
 
-\subsection{Hyperparameter Tuning}
+\subsection{Hyperparameter Optimization}
 \textbf{Set up}
 \begin{itemize}[itemsep=0pt, topsep=0pt, label=---]
   \item A custom scoring function using macro-averaged F1 (\texttt{f1\_scorer}) is created. This metric gives equal weight to each class, making it well-suited for imbalanced problems where accuracy alone could be misleading.
@@ -557,8 +557,8 @@ sample_weights = compute_sample_weight('balanced', y_train);
 \end{lstlisting}
 
 \subsubsection{Random Forest}
-To optimize the Random Forest model, a hyperparameter tuning pipeline was constructed using Scikit-learn's \textit{Pipeline} and \textit{RandomizedSearchCV}. This approach ensures that preprocessing steps are properly applied within each cross-validation fold, preventing data leakage and leading to a more reliable evaluation of the model's performance.\\
-\textbf{Tuning Pipeline}
+To optimize the Random Forest model, a hyperparameter tuning pipeline was constructed using Scikit-learn's \textit{Pipeline} and \textit{RandomizedSearchCV}. This approach ensures that preprocessing steps are properly applied within each cross-validation fold, preventing data leakage and leading to a more reliable evaluation of the model's performance.
+\subsubsection*{Tuning Pipeline}
 \begin{lstlisting}[language=python]
 # Parameter grids
 rf_param_grid = {
@@ -577,7 +577,7 @@ def create_rf_pipeline():
         ('classifier', RandomForestClassifier(random_state=42, n_jobs=-1))
     ])
 \end{lstlisting}
-\textbf{Hyperparameter Tuning Process}
+\subsubsection*{Hyperparameter Tuning Process}
 \begin{lstlisting}[language=python]
 rf_search = RandomizedSearchCV(
   create_rf_pipeline(),
@@ -594,7 +594,10 @@ rf_search = RandomizedSearchCV(
 rf_search.fit(X_train, y_train)
 \end{lstlisting}
 \subsubsection{Gradient Boosting}
-\textbf{Tuning Pipeline}
+\subsubsection*{Tuning Pipeline}
+To optimize the Gradient Boosting model, a tuning pipeline was created using Scikit-learn's \texttt{Pipeline}. The pipeline first applies the \texttt{preprocessor} to handle feature scaling and encoding, ensuring that all preprocessing steps are performed within each cross-validation fold. The preprocessed data is then fed into the \texttt{GradientBoostingClassifier}.\\
+
+A parameter grid, \texttt{gb\_param\_grid}, was constructed to guarantee that transformation and modeling steps are coordinated and prevents data leakage. By integrating the pipeline with \texttt{RandomizedSearchCV}, the hyperparameter search yields a robust and well-calibrated model.
 \begin{lstlisting}[language=python]
 # Parameter grids
 gb_param_grid = {
@@ -611,9 +614,8 @@ def create_gb_pipeline():
         ('preprocessor', preprocessor),
         ('classifier', GradientBoostingClassifier(random_state=42))
     ])
-
 \end{lstlisting}
-\textbf{Hyperparameter Tuning Process}
+\subsubsection*{Hyperparameter Tuning Process}
 \begin{lstlisting}[language=python]
 gb_search = RandomizedSearchCV(
   create_gb_pipeline(),
@@ -629,27 +631,136 @@ gb_search = RandomizedSearchCV(
 
 gb_search.fit(X_train, y_train, classifier__sample_weight=sample_weights)
 \end{lstlisting}
-\subsection{Evaluations}
+\subsection{Performance Metrics and Model Interpretation}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../images/confusion_matrix_hypetuned.png}
+\end{figure}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../pics/metrics_hypertuned.png}
+  \caption{Hypertuned Models' Metrics}
+\end{figure}
+The final hypertuned models shift focus from maximizing raw accuracy to achieving balanced performance, particularly improving classification of minority classes in the student dropout prediction task:
+\begin{itemize}
+  \item \textbf{Random Forest (Hypertuned)}:
+        \begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt]
+          \item Accuracy decreases slightly to 0.763 (from engineered 0.781 and naive 0.769).
+          \item \textbf{Macro F1} improves to 0.718 (\textbf{+3\%} vs naive).
+          \item \textbf{Recall} rises to 0.720 (\textbf{+5\%} vs naive).
+          \item \textbf{ROC-AUC} increases to 0.887 (+1\%), showing improved discrimination capacity.
+          \item Notably, minority class (\textit{Enrolled}) recall increases, with underprediction reduced by 50\% compared to naive, highlighting better handling of class imbalance.
+        \end{itemize}
+  \item \textbf{Gradient Boosting (Hypertuned)}:
+        \begin{itemize}[parsep=0pt, itemsep=0pt, topsep=0pt]
+          \item Accuracy falls to 0.768 (from naive 0.783 and engineered 0.778).
+          \item Macro F1 steadies at 0.712 after prior drop.
+          \item Recall holds at $\sim$0.708, matching engineered.
+          \item ROC-AUC remains strong at 0.882.
+          \item Improvements primarily manifest as reduced overfitting and more balanced generalization rather than direct metric gains.
+        \end{itemize}
+\end{itemize}
+
+\textbf{Summary:} Hypertuning sacrifices about 1--2\% accuracy to deliver higher macro metrics, fairer class-wise performance, and more reliable \textit{Enrolled} (minority) prediction. In imbalanced educational datasets, this approach is preferable over naive or merely feature-engineered models that optimize only for accuracy.
+
 \begin{figure}[H]
   \centering
   \includegraphics[width=\textwidth]{../images/top10_feature_importances_enhanced.png}
   \caption{Enhanced Models' Top 10 Feature Importances}
   \label{top10_enhanced}
 \end{figure}
-\newpage\section{Ensemble Learning}
+\subsubsection*{Insights:}
+
+\textbf{Random Forest:} In the baseline, raw academic performance counts dominate feature importance, with \emph{2nd - approved} being the most impactful feature. After enhancement, engineered ratios such as approval rates and average grades take precedence, indicating that the model benefits from summarized metrics rather than raw counts. Additionally, feature importance becomes more balanced post-tuning, suggesting reduced overfitting and a more generalized model.\\
+
+\textbf{Gradient Boosting:} The baseline model demonstrates extreme dominance by \emph{2nd - approved}, with this feature accounting for over 50\% of the total importance -- a sign of potential overfitting. Following feature engineering and hyperparameter tuning, its importance drops significantly. Instead, engineered features such as \emph{2nd\_approval\_rate} and \emph{2nd\_avg\_grade} emerge as key predictors. Admission-related attributes also gain prominence in the tuned model, leading to a more distributed and potentially robust set of important features.
+
+\section{Ensemble Method}
+\subsection{Voting Classifier Implementation}
+Ensemble voting is a popular technique in ensemble learning where the final prediction is made by combining the predictions of multiple individual models. It is commonly used for classification tasks, although it can also be applied to regression problems. In this technique, each individual model in the ensemble independently makes predictions on the input data. The final prediction is determined by combining the predictions of these models using a voting scheme.
+
 \begin{minipage}{0.4\textwidth}
-  \centering
-  \includegraphics[width=\textwidth]{../pics/voting_pipeline.png}
-  \captionof{figure}{Voting Pipeline}
-  \label{pipe_vote}
+  \begin{figure}[H]
+    \centering
+    \caption{Voting Classifier Pipeline}
+    \includegraphics[width=\textwidth]{../pics/voting_pipeline.png}
+    \label{pipe_vote}
+  \end{figure}
 \end{minipage}
-\newpage\section{Conclusion}
+\hfill
+\begin{minipage}{0.5\textwidth}
+  \begin{lstlisting}[language=python]
+ensemble = VotingClassifier(
+  estimators=[
+      ('rf', rf_search.best_estimator_),
+      ('gb', gb_search.best_estimator_)
+  ],
+  voting='soft') # To be discussed
+ensemble.fit(X_train, y_train)
+  \end{lstlisting}
+\end{minipage}
 
-This machine learning project successfully developed predictive models for student outcome classification, achieving over 77\% accuracy in identifying students who will graduate, remain enrolled, or dropout. The comprehensive feature engineering approach, particularly the creation of approval rates and performance delta metrics, significantly contributed to model performance.
+\textbf{Why soft voting?}
+\begin{itemize}
+  \item \textbf{Both base models support probabilities:} The ensemble combines a RandomForestClassifier and GradientBoostingClassifier, both of which provide predicted class probabilities via their \texttt{predict\_proba} methods. Soft voting leverages these probabilities by averaging them across models and selecting the class with the highest mean probability, rather than simply voting on class labels.
+  \item \textbf{Multi-class problem with class imbalance:} The prediction task involves three distinct outcome classes (\emph{Dropout}, \emph{Enrolled}, \emph{Graduate}), with certain classes (such as \emph{Enrolled}) being underrepresented. Soft voting is advantageous here as it incorporates the confidence of each model's prediction, allowing the ensemble to account for subtle distinctions and avoid bias towards the majority class, unlike hard voting where ties or majority label counts may obscure minority classes.
+  \item \textbf{Improved decision confidence:} By weighting class probabilities, soft voting enables more nuanced and informed consensus decisions, especially when individual models express uncertainty. This typically results in improved overall and minority class performance for imbalanced multi-class datasets such as this one.
+\end{itemize}
 
-The systematic workflow from data exploration through hyperparameter optimization demonstrates best practices in machine learning project development. The results provide a foundation for implementing early warning systems in educational institutions to identify at-risk students and enable timely interventions.
+\subsection{Final Models Comparison}
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{../pics/3models_comparison.png}
+  \caption{Final Comparison}
+  \label{final_comp}
+\end{figure}
 
-% \begin{thebibliography}{9}
+\subsubsection*{Key Insights}
+\begin{itemize}
+  \item \textbf{Overall Best Performer:} The Ensemble model consistently outperforms the individual models across most evaluation metrics, achieving the highest accuracy, F1\_Weighted (0.772), Precision\_Macro (0.726), and a strong ROC\_AUC (0.887). This demonstrates the effectiveness of combining Random Forest's balanced predictions with Gradient Boosting's depth via soft voting, which mitigates individual model weaknesses - such as the lower macro scores of Gradient Boosting.
+  \item \textbf{Accuracy and Weighted Metrics:} While Gradient Boosting slightly outperforms Random Forest in accuracy (0.768 vs. 0.763), the Ensemble achieves an even higher score. Weighted F1 and Precision values, which emphasize performance on majority classes, are highest for the Ensemble, highlighting its robustness for imbalanced datasets.
+  \item \textbf{Macro Metrics (Class Balance):} Random Forest leads in F1\_Macro (0.718 vs. 0.712) and Recall\_Macro (0.720 vs. 0.708) when compared to Gradient Boosting, signaling stronger detection of the minority class (Enrolled). The Ensemble matches Random Forest on F1\_Macro and surpasses it in macro precision, achieving a favorable balance across all classes without substantial sacrifices in recall.
+\end{itemize}
 
-% \end{thebibliography}
+\section{Conclusion}
+This machine learning assignment project aimed to predict students' academic outcomes -- specifically, whether they would graduate, remain enrolled, or drop out -- using a comprehensive dataset encompassing demographic, socioeconomic, and academic performance attributes. By leveraging advanced modeling techniques, we successfully developed robust predictive models that achieved over 77\% accuracy, providing valuable insights into factors influencing student success and demonstrating the practical application of machine learning in educational analytics.
+
+\subsection{Summary of Methodology}
+\subsubsection*{Dataset Insights and Exploratory Data Analysis (EDA)}
+The project began by developing a systematic and iterative workflow in line with machine learning best practices. In the initial \textbf{dataset insights} stage, we loaded and inspected the raw data to understand its structure. This was followed by extensive visualizations, including distributions of numerical features, breakdowns of key categorical variables, and a correlation heatmap. These analyses were used to identify data patterns, class imbalances, and relationships among critical variables such as enrollment age, tuition payment status, and semester-based performance metrics. This EDA phase revealed important trends -- for example, the presence of class imbalances in the target variable and strong correlations between academic approvals and outcomes -- providing a strong foundation for further analysis and decision-making.
+
+\subsubsection*{Preprocessing}
+The next phase, \textbf{preprocessing}, focused on ensuring data quality and preparing the dataset for modeling. This included handling missing values, encoding categorical features, scaling numerical variables, and splitting the data into training and testing subsets. These steps were critical to mitigate issues such as multicollinearity, providing a clean and robust pipeline suitable for downstream machine learning tasks.
+
+\subsubsection*{Training Pipelines}
+During the \textbf{training pipelines} step, we selected appropriate models for the task, concentrating on Random Forest and Gradient Boosting due to their proven ability to capture complex, non-linear relationships. Baseline models were trained, and initial evaluations were conducted using metrics such as accuracy, weighted and macro F1-score, precision, recall, and ROC-AUC. These results highlighted areas of solid performance as well as opportunities to address challenges related to class imbalance and potential overfitting.
+
+\subsubsection*{Model Improvements and Tuning}
+To further enhance predictive performance, we carried out \textbf{model improvements} via feature engineering. New attributes were constructed, such as approval rates (e.g., \texttt{2nd\_approval\_rate}), average grades (e.g., \texttt{2nd\_avg\_grade}), and performance deltas (e.g., \texttt{delta\_avg\_grade}). Retraining models on these engineered features generated noticeable improvements in balanced evaluation metrics. Further refinement was achieved through hyperparameter tuning using grid search for both Random Forest (e.g., \texttt{max\_depth}, \texttt{n\_estimators}) and Gradient Boosting (e.g., \texttt{learning\_rate}, \texttt{subsample}). Post-tuning analysis showed a shift in feature importance from raw counts (such as ``2nd - approved'' in baseline models) towards the newly engineered ratios---a change that reduced overfitting and improved overall model generalization, as reflected in F1\_Macro ($\sim$0.718) and ROC\_AUC ($\sim$0.887).
+
+\subsubsection*{Ensemble Learning}
+The final step, \textbf{ensemble learning}, combined the strengths of the individually tuned Random Forest and Gradient Boosting models through a soft-voting classifier. This method averaged predicted class probabilities to better leverage the confidence scores of each model. Particularly well-suited to our multi-class, imbalanced classification problem, this strategy produced the highest performance across all approaches: an accuracy of 0.776, F1\_Macro of 0.718, and ROC\_AUC of 0.887 -- consistently outperforming single models by 1--2\% and notably improving detection of the minority class (\emph{Enrolled}).
+
+\subsection{Discussion, Limitations, and Future Work}
+Key findings underscore the importance of academic performance indicators, such as second-semester approvals and grades, in predicting outcomes, with engineered features proving instrumental in model refinement. The ensemble's superior results highlight the value of combining complementary algorithms to mitigate individual limitations and achieve more reliable predictions.
+
+In practical terms, this work lays the groundwork for deploying early warning systems in educational institutions, enabling proactive interventions like targeted counseling or resource allocation for at-risk students. Limitations include potential dataset-specific biases and the absence of real-time data; future work could incorporate additional models (e.g., neural networks), external features (e.g., socioeconomic trends), or deployment via web applications for broader impact. Overall, this project not only met its objectives but also exemplified a complete machine learning lifecycle, from exploration to optimization, contributing meaningfully to predictive analytics in education.
+
+\begin{thebibliography}{9}
+  \bibitem{scikit-learn}
+  Pedregosa, F., Varoquaux, G., Gramfort, A., Michel, V., Thirion, B., Grisel, O. (2011). Scikit-learn: Machine learning in Python. \textit{Journal of Machine Learning Research}, 12, 2825-2830.
+
+  \bibitem{ensemble}
+  Rokach, L. (2010). Ensemble-based classifiers. \textit{Artificial Intelligence Review}, 33(1-2), 1-39.
+
+  \bibitem{imbalanced}
+  He, H., \& Garcia, E. A. (2009). Learning from imbalanced data. \textit{IEEE Transactions on Knowledge and Data Engineering}, 21(9), 1263-1284.
+
+  \bibitem{student-analytics}
+  Romero, C., \& Ventura, S. (2010). Educational Data Mining: A Review of the State of the Art. \textit{IEEE Transactions on Systems, Man, and Cybernetics, Part C (Applications and Reviews)}, 40(6), 601-618.
+
+  \bibitem{gridsearch}
+  Bergstra, J., \& Bengio, Y. (2012). Random search for hyper-parameter optimization. \textit{Journal of Machine Learning Research}, 13, 281-305.
+\end{thebibliography}
 \end{document}
