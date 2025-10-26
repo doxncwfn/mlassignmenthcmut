@@ -1,0 +1,36 @@
+# Git files
+.git
+.gitignore
+
+# Python cache
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+
+# Jupyter Notebook checkpoints
+.ipynb_checkpoints
+
+# Environment
+venv/
+env/
+ENV/
+
+# MacOS
+.DS_Store
+
+# IDEs
+.vscode/
+.idea/
+
+# Documentation files (not needed in container)
+docs/
+excalidraw/
+images/
+pics/
+*.pdf
+
+# Temporary files
+*.log
+*.tmp
